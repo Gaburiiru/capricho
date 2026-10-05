@@ -380,7 +380,7 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 
 ### 1. Clonar
 ```bash
-git clone https://github.com/<tu-usuario>/capricho.git
+git clone https://github.com/Gaburiiru/capricho.git
 cd capricho
 ```
 
