@@ -494,7 +494,7 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `chore: agregar Koin y Ktor al proyecto KMP`
 - [x] `chore: eliminar código de ejemplo del template`
 - [x] `feat(design): tema, paleta y tipografías`
-- [ ] `feat(design): componentes base (Pill, NumPad, Mascot)`
+- [x] `feat(design): componentes base (Mascota)`
 - [ ] `chore(ci): workflow de GitHub Actions`
 
 ### Fase 1 · Dominio (con tests)
