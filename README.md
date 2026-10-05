@@ -252,16 +252,21 @@ flowchart TB
 
 ### Estructura del proyecto
 
+El proyecto sigue la estructura estándar del wizard de KMP: un módulo `shared` con **todo el código compartido** (lógica + UI en Compose Multiplatform) y un módulo `androidApp` que solo actúa como punto de entrada de Android.
+
 ```
-Capricho/
-├── composeApp/
+capricho/
+├── androidApp/                        # Entry point Android (MainActivity, manifest) → genera el APK
+├── iosApp/                            # Proyecto Xcode (entry point iOS)
+├── shared/
 │   └── src/
-│       ├── commonMain/kotlin/com/capricho/
+│       ├── commonMain/kotlin/com/example/caprichoapp/
+│       │   ├── App.kt                 # Raíz de Compose + KoinApplication
 │       │   ├── core/
 │       │   │   ├── designsystem/      # Tema, colores, tipografías, componentes (Pill, Mascot, NumPad)
 │       │   │   ├── navigation/
-│       │   │   ├── network/           # Supabase client, Ktor, manejo de errores
-│       │   │   └── di/                # Módulos Koin
+│       │   │   ├── network/           # Cliente Supabase, Ktor, manejo de errores
+│       │   │   └── di/                # Módulos Koin (AppModule.kt)
 │       │   ├── feature/
 │       │   │   ├── auth/
 │       │   │   ├── onboarding/
@@ -276,15 +281,22 @@ Capricho/
 │       │       ├── calculator/        # ImpactCalculator, DurabilityPolicy
 │       │       ├── repository/        # Interfaces
 │       │       └── usecase/
-│       ├── androidMain/               # Google sign-in nativo, engine Ktor OkHttp
-│       └── iosMain/                   # Google sign-in nativo, engine Ktor Darwin
-├── iosApp/                            # Proyecto Xcode (entry point)
+│       ├── commonMain/composeResources/   # Fuentes, imágenes, strings
+│       ├── commonTest/                # Tests de lógica compartida (corren en JVM)
+│       ├── androidMain/               # Implementaciones específicas de Android
+│       ├── androidHostTest/           # Tests unitarios que corren en JVM (Android)
+│       ├── iosMain/                   # MainViewController + implementaciones iOS
+│       └── iosTest/
 ├── supabase/
 │   ├── migrations/                    # SQL del esquema + RLS
 │   └── functions/gemini-proxy/        # Edge Function (proxy de IA)
-├── docs/                              # Diagramas y capturas
-└── .github/workflows/                 # CI
+├── docs/                              # Diagramas, capturas y log de IA
+├── .github/workflows/ci.yml           # Integración continua
+├── gradle/libs.versions.toml          # Catálogo de versiones
+└── README.md
 ```
+
+> El paquete base es `com.example.caprichoapp` (valor del template). Se puede renombrar a uno propio antes de configurar el login con Google.
 
 ---
 
@@ -359,7 +371,7 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 | Herramienta | Para qué la usé | Cómo auditaba su salida |
 |---|---|---|
 | **Claude** | Definir el alcance, estructurar la idea en README, diseñar el flujo, el modelo de datos y las reglas de cálculo; generar boilerplate de KMP/Compose | Revisión manual de cada decisión; contraste con documentación oficial de KMP y supabase-kt |
-| **Asistente de código en el IDE** (Claude Code / Copilot / Gemini Code Assist, completar según uso real) | Generar composables, ViewModels, repositorios y tests unitarios por tarea | Compilar en Android **e iOS**, correr tests, revisar diffs antes de cada commit |
+| **Asistente de código en el IDE** (Claude Code / Copilot / Gemini Code Assist, completar según uso real) | Generar composables, ViewModels, repositorios y tests unitarios por tarea | Compilar en Android (e iOS cuando hay macOS disponible), correr tests, revisar diffs antes de cada commit |
 | **Gemini API** | Funcionalidad *dentro* de la app: estrategias de ahorro | System prompt con reglas, salida en JSON validada, fallback ante errores |
 
 **Cómo guié a la IA:**
@@ -377,6 +389,8 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 - **Android Studio** (última versión estable) con el plugin *Kotlin Multiplatform*
 - **Xcode 15+** y macOS (solo para correr iOS)
 - Cuenta gratuita de **Supabase** y una API key de **Gemini** (Google AI Studio)
+
+> ℹ️ **Sobre iOS:** el proyecto desarrolla y verifica en Android. Compilar y probar iOS requiere macOS + Xcode. En Windows/Linux, Gradle muestra el aviso *"iosSimulatorArm64Test is disabled"*; es esperable y se silencia con `kotlin.native.ignoreDisabledTargets=true` en `gradle.properties`.
 
 ### 1. Clonar
 ```bash
@@ -402,47 +416,71 @@ GEMINI_API_KEY=AIza...
 ```
 
 ### 4. Correr en Android
+Abrir el proyecto en Android Studio, elegir la configuración `androidApp` y ejecutar en un emulador o dispositivo. O por terminal:
+
 ```bash
-./gradlew :composeApp:installDebug
+./gradlew :androidApp:installDebug
 ```
-o abrir el proyecto en Android Studio y ejecutar la configuración `composeApp`.
 
 ### 5. Generar el APK
 ```bash
-./gradlew :composeApp:assembleRelease
-# APK en composeApp/build/outputs/apk/release/
+# Debug (instalable directo)
+./gradlew :androidApp:assembleDebug
+# APK en androidApp/build/outputs/apk/debug/
+
+# Release (requiere firma configurada)
+./gradlew :androidApp:assembleRelease
 ```
 
-### 6. Correr en iOS
+### 6. Correr en iOS (macOS)
 1. Abrir `iosApp/iosApp.xcodeproj` en Xcode (o usar la configuración `iosApp` de Android Studio).
 2. Elegir un simulador y presionar **Run**.
 
 ### 7. Tests
 ```bash
-./gradlew :composeApp:allTests
+./gradlew :shared:testAndroidHostTest
 ```
 
 ---
 
 ## ✅ Testing y CI
 
-- **Unit tests (commonTest):** `ImpactCalculator`, `DurabilityPolicy`, casos de uso, ViewModels (con `Turbine` + repositorios fake).
+- **Unit tests (`commonTest`):** `ImpactCalculator`, `DurabilityPolicy` y casos de uso. Son Kotlin puro y corren en JVM, sin emulador.
+- **ViewModels (opcional):** con `Turbine` + repositorios *fake* (versiones en memoria, sin depender de Supabase).
 - **Casos de borde cubiertos:** sueldo = 0, monto = 0, cuotas = 1, metas sin ahorro, meta ya cumplida, fallo de red, respuesta inválida de la IA.
-- **CI con GitHub Actions:** en cada push/PR compila Android, ejecuta tests y corre el linter (`ktlint`/`detekt`).
+- **CI con GitHub Actions:** en cada push/PR compila Android y ejecuta los tests unitarios. Los tests no son "de GitHub": el CI solo corre automáticamente los mismos tests que se ejecutan en local.
+
+```bash
+# Tests unitarios (Android host / JVM)
+./gradlew :shared:testAndroidHostTest
+```
 
 ```yaml
-# .github/workflows/ci.yml (resumen)
-on: [push, pull_request]
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+  pull_request:
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
+        with:
+          distribution: temurin
+          java-version: 17
+
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :composeApp:allTests :composeApp:assembleDebug
+
+      - name: Tests y build
+        run: ./gradlew :shared:testAndroidHostTest :androidApp:assembleDebug
 ```
+
+> El CI no compila iOS: requiere un runner macOS, más lento y costoso. Ver nota de iOS en [Cómo compilar](#-cómo-compilar-y-correr-el-proyecto).
 
 ---
 
@@ -451,9 +489,12 @@ jobs:
 Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor a mayor** y prioriza el core principal. Cada ítem es un commit (o un par) con mensaje claro bajo *Conventional Commits* (`feat:`, `fix:`, `test:`, `docs:`, `chore:`).
 
 ### Fase 0 · Base
-- [ ] `docs: README con visión, flujo y arquitectura`
-- [ ] `chore: proyecto KMP + Compose Multiplatform + Koin + Ktor`
-- [ ] `feat(design): tema, tipografías, paleta y componentes base (Pill, NumPad, Mascot)`
+- [x] `docs: README inicial con visión, flujo y arquitectura`
+- [x] `chore: proyecto KMP base (template de JetBrains)`
+- [x] `chore: agregar Koin y Ktor al proyecto KMP`
+- [x] `chore: eliminar código de ejemplo del template`
+- [ ] `feat(design): tema, paleta y tipografías`
+- [ ] `feat(design): componentes base (Pill, NumPad, Mascot)`
 - [ ] `chore(ci): workflow de GitHub Actions`
 
 ### Fase 1 · Dominio (con tests)
