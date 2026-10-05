@@ -263,9 +263,8 @@ capricho/
 │       ├── commonMain/kotlin/com/example/caprichoapp/
 │       │   ├── App.kt                 # Raíz de Compose + KoinApplication
 │       │   ├── core/
-│       │   │   ├── designsystem/      # Tema, colores, tipografías, componentes (Pill, Mascot, NumPad)
+│       │   │   ├── designsystem/      # Tema, colores, tipografías, componentes (Mascot, Pill, NumPad)
 │       │   │   ├── navigation/
-│       │   │   ├── network/           # Cliente Supabase, Ktor, manejo de errores
 │       │   │   └── di/                # Módulos Koin (AppModule.kt)
 │       │   ├── feature/
 │       │   │   ├── auth/
@@ -276,11 +275,15 @@ capricho/
 │       │   │   ├── dashboard/         # Core secundario
 │       │   │   ├── history/
 │       │   │   └── profile/
-│       │   └── domain/
-│       │       ├── model/
-│       │       ├── calculator/        # ImpactCalculator, DurabilityPolicy
-│       │       ├── repository/        # Interfaces
-│       │       └── usecase/
+│       │   ├── domain/
+│       │   │   ├── model/             # Profile, Expense, Goal, Durability, ImpactLevel
+│       │   │   ├── calculator/        # ImpactCalculator, DurabilityPolicy
+│       │   │   ├── repository/        # Interfaces
+│       │   │   └── usecase/
+│       │   └── data/
+│       │       ├── remote/            # Cliente Supabase/Ktor, Gemini, DTOs @Serializable
+│       │       ├── mapper/            # DTO ↔ modelos de dominio
+│       │       └── repository/        # Implementaciones de las interfaces del dominio
 │       ├── commonMain/composeResources/   # Fuentes, imágenes, strings
 │       ├── commonTest/                # Tests de lógica compartida (corren en JVM)
 │       ├── androidMain/               # Implementaciones específicas de Android
@@ -394,7 +397,7 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 
 ### 1. Clonar
 ```bash
-git clone https://github.com/Gaburiiru/capricho.git
+git clone https://github.com/<tu-usuario>/capricho.git
 cd capricho
 ```
 
@@ -494,11 +497,11 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `chore: agregar Koin y Ktor al proyecto KMP`
 - [x] `chore: eliminar código de ejemplo del template`
 - [x] `feat(design): tema, paleta y tipografías`
-- [x] `feat(design): componentes base (Mascota)`
-- [ ] `chore(ci): workflow de GitHub Actions`
+- [x] `feat(design): componentes base (Pill, NumPad, Mascot)`
+- [x] `chore(ci): workflow de GitHub Actions`
 
 ### Fase 1 · Dominio (con tests)
-- [ ] `feat(domain): modelos Expense, Goal, Profile`
+- [x] `feat(domain): modelos Expense, Goal, Profile`
 - [ ] `feat(domain): ImpactCalculator (% sueldo, % meta, cuotas)`
 - [ ] `feat(domain): DurabilityPolicy y semáforo`
 - [ ] `test(domain): casos de borde del cálculo`
