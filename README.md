@@ -493,7 +493,7 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `chore: proyecto KMP base (template de JetBrains)`
 - [x] `chore: agregar Koin y Ktor al proyecto KMP`
 - [x] `chore: eliminar código de ejemplo del template`
-- [ ] `feat(design): tema, paleta y tipografías`
+- [x] `feat(design): tema, paleta y tipografías`
 - [ ] `feat(design): componentes base (Pill, NumPad, Mascot)`
 - [ ] `chore(ci): workflow de GitHub Actions`
 
