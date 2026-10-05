@@ -502,9 +502,9 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 
 ### Fase 1 · Dominio (con tests)
 - [x] `feat(domain): modelos Expense, Goal, Profile`
-- [ ] `feat(domain): ImpactCalculator (% sueldo, % meta, cuotas)`
-- [ ] `feat(domain): DurabilityPolicy y semáforo`
-- [ ] `test(domain): casos de borde del cálculo`
+- [x] `feat(domain): ImpactCalculator (% sueldo, % meta, cuotas)`
+- [x] `feat(domain): DurabilityPolicy y semáforo`
+- [x] `test(domain): casos de borde del cálculo`
 
 ### Fase 2 · Backend y sesión
 - [ ] `feat(supabase): esquema SQL + RLS`
