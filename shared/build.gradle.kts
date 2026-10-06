@@ -1,10 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.buildkonfig)
 }
 
 kotlin {
@@ -75,4 +78,20 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun secret(name: String): String =
+    localProps.getProperty(name) ?: System.getenv(name) ?: ""
+
+buildkonfig {
+    packageName = "com.example.caprichoapp"
+    defaultConfigs {
+        buildConfigField(STRING, "SUPABASE_URL", secret("SUPABASE_URL"))
+        buildConfigField(STRING, "SUPABASE_PUBLISHABLE_KEY", secret("SUPABASE_PUBLISHABLE_KEY"))
+    }
 }

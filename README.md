@@ -331,7 +331,6 @@ erDiagram
         uuid category_id FK
         text title "opcional"
         numeric amount
-        text payment_type "IMMEDIATE | INSTALLMENTS"
         int installments "1 si es inmediato"
         text durability "FLEETING | MEDIUM | HIGH"
         text kind "RECURRING | ANT (hormiga) | ONE_OFF"
@@ -344,7 +343,6 @@ erDiagram
         text title
         numeric target_amount
         numeric saved_amount
-        text payment_type
         int installments
         text durability
         text status "ACTIVE | ACHIEVED | ARCHIVED"
@@ -397,7 +395,7 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 
 ### 1. Clonar
 ```bash
-git clone https://github.com/<tu-usuario>/capricho.git
+git clone https://github.com/Gaburiiru/capricho.git
 cd capricho
 ```
 
@@ -507,7 +505,7 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `test(domain): casos de borde del cálculo`
 
 ### Fase 2 · Backend y sesión
-- [ ] `feat(supabase): esquema SQL + RLS`
+- [x] `feat(supabase): esquema SQL + RLS`
 - [ ] `feat(auth): login con Google`
 - [ ] `feat(onboarding): nombre + sueldo, persistido en Supabase`
 
