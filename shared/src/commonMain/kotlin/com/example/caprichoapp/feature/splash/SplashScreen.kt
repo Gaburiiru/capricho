@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,17 +19,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
-import com.example.caprichoapp.domain.repository.AuthState
+import com.example.caprichoapp.feature.auth.SessionState
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SplashScreen(
-    authState: AuthState,
-    onFinished: (AuthState) -> Unit,
+    sessionState: SessionState,
+    onRetry: () -> Unit,
+    onFinished: (SessionState) -> Unit,
 ) {
     var minTimeElapsed by remember { mutableStateOf(false) }
 
@@ -35,12 +39,14 @@ fun SplashScreen(
         delay(1_500.milliseconds)
         minTimeElapsed = true
     }
-    LaunchedEffect(authState, minTimeElapsed) {
-        if (minTimeElapsed && authState !is AuthState.Loading) onFinished(authState)
+    LaunchedEffect(sessionState, minTimeElapsed) {
+        val resolved =
+            sessionState !is SessionState.Loading && sessionState !is SessionState.ProfileError
+        if (minTimeElapsed && resolved) onFinished(sessionState)
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -51,5 +57,17 @@ fun SplashScreen(
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.primary,
         )
+
+        if (sessionState is SessionState.ProfileError) {
+            Spacer(Modifier.height(24.dp))
+            Text(
+                text = "No pudimos cargar tus datos. Revisá tu conexión e intentá de nuevo.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onRetry) { Text("Reintentar") }
+        }
     }
 }

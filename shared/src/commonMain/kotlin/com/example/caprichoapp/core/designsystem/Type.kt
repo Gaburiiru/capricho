@@ -7,6 +7,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import caprichoapp.shared.generated.resources.Res
+import caprichoapp.shared.generated.resources.Silkscreen_Bold
+import caprichoapp.shared.generated.resources.Silkscreen_Regular
 import caprichoapp.shared.generated.resources.Nunito_Bold
 import caprichoapp.shared.generated.resources.Nunito_ExtraBold
 import caprichoapp.shared.generated.resources.Nunito_Regular
@@ -21,6 +23,13 @@ fun nunitoFamily() = FontFamily(
     Font(Res.font.Nunito_ExtraBold, FontWeight.ExtraBold),
 )
 
+/** Fuente pixel (Silkscreen, SIL OFL) para detalles estilo años 90: pantalla del bicho, botones, etiquetas. */
+@Composable
+fun pixelFontFamily() = FontFamily(
+    Font(Res.font.Silkscreen_Regular, FontWeight.Normal),
+    Font(Res.font.Silkscreen_Bold, FontWeight.Bold),
+)
+
 @Composable
 fun caprichoTypography(): Typography {
     val nunito = nunitoFamily()
@@ -33,4 +42,4 @@ fun caprichoTypography(): Typography {
         bodyMedium = TextStyle(fontFamily = nunito, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp),
         labelLarge = TextStyle(fontFamily = nunito, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
     )
-}
+}

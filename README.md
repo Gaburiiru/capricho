@@ -83,8 +83,9 @@ Principios de producto:
 - [x] Splash y navegación (Splash → Login → Home) con **sesión persistente**
 - [x] Botón **"Saltar"**: entra con una sesión anónima de Supabase
 - [ ] Login con Google (Supabase Auth, **nativo en Android**; ver [limitaciones](#-sesión-login-y-limitaciones-conocidas))
-- [ ] Onboarding (nombre + sueldo actual) persistido en Supabase
-- [ ] Home "Capricho" con mascota animada
+- [ ] Onboarding (nombre, **apodo opcional** y sueldo mensual) persistido en Supabase; la interfaz usa el apodo si existe
+- [ ] Home "Capricho": bicho virtual estilo años 90 (pantalla LCD, mascota animada que habla y reacciona al toque) que invita a predecir el capricho
+- [ ] Barra de navegación inferior con íconos pixel art: Historial, Metas, Inicio y Perfil
 - [ ] Ingreso de monto con teclado numérico propio
 - [ ] Selección inmediato / cuotas con pills (1, 3, 6, 9, 12, 18, 24, otra)
 - [ ] Selección de durabilidad (fugaz / medio / alto)
@@ -199,7 +200,7 @@ flowchart TD
 - La **Splash se muestra siempre** y espera a que Supabase termine de cargar la sesión guardada. El **Login solo aparece si no hay sesión**.
 - **Única fuente de verdad:** el estado de sesión de Supabase. `SessionViewModel` lo expone como `AuthState` (`Loading`, `SignedIn`, `SignedOut`) y `AppNavHost` navega en función de ese estado, también cuando la sesión se cierra o vence. Ninguna pantalla decide por su cuenta a dónde ir.
 - **Persistencia:** `supabase-kt` guarda y restaura la sesión entre ejecuciones de la app.
-- **Onboarding (próximo):** seguirá la misma lógica de "solo la primera vez". Se mostrará únicamente si el usuario **no tiene fila en `profiles`**, de modo que la fuente de verdad queda en Supabase y no en una bandera local.
+- **Onboarding (solo la primera vez):** tras iniciar sesión, la app consulta la tabla `profiles`. **Sin fila → Onboarding; con fila → Home.** La fuente de verdad queda en Supabase y no en una bandera local. Si no se puede consultar el perfil (por ejemplo, sin internet), la app **no** manda al usuario al onboarding —para no pisar sus datos—: muestra un error con botón *Reintentar* en la Splash.
 
 ### Limitaciones conocidas
 
@@ -230,7 +231,8 @@ flowchart TD
 | Fechas | `kotlinx-datetime` |
 | IA | Gemini API (REST con Ktor) |
 | Gráficos | Gráfico de torta propio con `Canvas` de Compose (sin dependencias nativas) |
-| Mascota / animación | Animaciones de Compose (`Animatable`, `InfiniteTransition`); opcional Lottie multiplataforma |
+| Mascota / animación | Sprites pixel art en grillas de texto dibujadas con `Canvas`, animadas con `Animatable` e `InfiniteTransition` (sin GIFs ni librerías) |
+| Estética | Material 3 + detalles pixel art de los 90: fuente **Silkscreen**, formas con esquinas escalonadas, sombras duras e íconos dibujados a mano (sin `material-icons`) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test`, Turbine, fakes manuales |
 | CI | GitHub Actions |
 
@@ -312,6 +314,7 @@ capricho/
 │       │   │   ├── model/             # Profile, Expense, Goal, Durability, ImpactLevel
 │       │   │   ├── calculator/        # ImpactCalculator, DurabilityPolicy
 │       │   │   ├── repository/        # Interfaces
+│       │   │   ├── validation/        # ProfileValidator (reglas del onboarding)
 │       │   │   └── usecase/
 │       │   └── data/
 │       │       ├── remote/            # Cliente Supabase/Ktor, Gemini, DTOs @Serializable
@@ -348,6 +351,7 @@ erDiagram
     PROFILES {
         uuid id PK "= auth.users.id"
         text display_name
+        text nickname "opcional"
         numeric monthly_salary
         text currency
         timestamptz created_at
@@ -550,10 +554,11 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `feat(splash): pantalla de splash con mascota`
 - [x] `feat(auth): pantalla de login con opción de saltar`
 - [ ] `feat(auth): login con Google nativo (Android)`
-- [ ] `feat(onboarding): nombre + sueldo, persistido en Supabase`
+- [x] `feat(onboarding): nombre, apodo y sueldo, persistido en Supabase`
 
 ### Fase 3 · Core principal
-- [ ] `feat(capricho): pantalla inicial con mascota animada`
+- [x] `feat(capricho): pantalla inicial con mascota animada`
+- [x] `feat(navigation): barra inferior con Historial, Metas, Inicio y Perfil`
 - [ ] `feat(capricho): ingreso de monto con teclado numérico`
 - [ ] `feat(capricho): inmediato/cuotas con pills`
 - [ ] `feat(capricho): durabilidad`
@@ -605,6 +610,9 @@ Fuera del alcance del challenge, pero **contempladas en el diseño de datos**:
 | Tags/pills en vez de campos de texto | Formulario clásico | Menor fricción, mejor UX en mobile y datos más limpios |
 | Proxy de Gemini vía Edge Function | Key en el cliente | Nunca exponer secretos en una app distribuida |
 | Core secundario al final | Hacerlo en paralelo | El flujo "Capricho" es el diferencial y lo imprescindible |
+| Pixel art dibujado en código (sprites e íconos) | Imágenes, GIFs, Lottie o `material-icons` | Cero archivos de diseño, se adapta al tema claro/oscuro, funciona igual en Android e iOS y se puede testear (todos los frames deben tener las mismas dimensiones) |
+| Fuente pixel Silkscreen solo en detalles | Usarla en toda la app | Mantiene la lectura cómoda con Nunito y deja el estilo retro para la pantalla del bicho, botones y etiquetas |
+| Tabs de Historial, Metas y Perfil como pantallas provisorias | Dejar los íconos sin destino | La navegación ya funciona de punta a punta y cada pantalla se reemplaza cuando llega su feature |
 | "Saltar" con sesión anónima de Supabase | Modo invitado sin sesión | Mantiene RLS y el mismo flujo de datos, y evita bloquear a quien no pueda usar Google (por ejemplo, quien evalúa la app). Costo: los datos se pierden al desinstalar o cerrar sesión |
 | Google nativo solo en Android | Flujo por navegador con deep links en ambas plataformas | Menos configuración y mejor experiencia; iOS no se puede verificar sin macOS, así que se documenta en vez de dejarlo a medias |
 | El estado de sesión decide la navegación | Que cada pantalla decida a dónde ir | Evita rutas inconsistentes al vencer o cerrar la sesión |
@@ -614,6 +622,10 @@ Fuera del alcance del challenge, pero **contempladas en el diseño de datos**:
 ## 📄 Licencia
 
 MIT — ver [LICENSE](LICENSE).
+
+---
+
+**Fuentes:** Nunito y Silkscreen, ambas bajo la [SIL Open Font License](https://openfontlicense.org).
 
 ---
 

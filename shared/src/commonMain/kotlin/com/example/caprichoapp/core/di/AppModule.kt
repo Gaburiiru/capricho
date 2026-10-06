@@ -2,9 +2,12 @@ package com.example.caprichoapp.core.di
 
 import com.example.caprichoapp.BuildKonfig
 import com.example.caprichoapp.data.repository.SupabaseAuthRepository
+import com.example.caprichoapp.data.repository.SupabaseProfileRepository
 import com.example.caprichoapp.domain.repository.AuthRepository
+import com.example.caprichoapp.domain.repository.ProfileRepository
 import com.example.caprichoapp.feature.auth.LoginViewModel
 import com.example.caprichoapp.feature.auth.SessionViewModel
+import com.example.caprichoapp.feature.onboarding.OnboardingViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.MemoryCodeVerifierCache
@@ -48,8 +51,10 @@ val appModule = module {
 
     // Repositorios (el dominio solo conoce la interfaz)
     singleOf(::SupabaseAuthRepository) bind AuthRepository::class
+    singleOf(::SupabaseProfileRepository) bind ProfileRepository::class
 
     // ViewModels
     viewModelOf(::SessionViewModel)
     viewModelOf(::LoginViewModel)
+    viewModelOf(::OnboardingViewModel)
 }

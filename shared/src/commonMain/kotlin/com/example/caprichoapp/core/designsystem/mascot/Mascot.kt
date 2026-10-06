@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -27,15 +28,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val REACTION_MS = 1_400L
+
+/**
+ * Mascota pixel art. El [mood] viene de afuera (lo decide el ViewModel);
+ * además reacciona sola al toque: salta y se pone feliz un momento.
+ */
 @Composable
 fun Mascot(
     mood: MascotMood,
     modifier: Modifier = Modifier,
 ) {
-    val frames = remember(mood) { MascotSprites.framesFor(mood) }
-    var frameIndex by remember(mood) { mutableIntStateOf(0) }
+    // Reacción al toque: cada toque reinicia el temporizador
+    var reactions by remember { mutableIntStateOf(0) }
+    var reacting by remember { mutableStateOf(false) }
+    LaunchedEffect(reactions) {
+        if (reactions > 0) {
+            reacting = true
+            delay(REACTION_MS.milliseconds)
+            reacting = false
+        }
+    }
 
-    LaunchedEffect(mood) {
+    val shownMood = if (reacting) MascotMood.Happy else mood
+    val frames = remember(shownMood) { MascotSprites.framesFor(shownMood) }
+    var frameIndex by remember(shownMood) { mutableIntStateOf(0) }
+
+    LaunchedEffect(shownMood) {
         while (true) {
             delay(frames[frameIndex].durationMs.milliseconds)
             frameIndex = (frameIndex + 1) % frames.size
@@ -49,6 +68,7 @@ fun Mascot(
             'K' to colors.background,
             'P' to colors.secondary,
             'N' to colors.onPrimaryContainer,
+            'H' to colors.secondary,
         )
     }
 
@@ -73,6 +93,7 @@ fun Mascot(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
+                reactions++
                 scope.launch {
                     jump.animateTo(-24f, tween(120))
                     jump.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))

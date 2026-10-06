@@ -26,7 +26,9 @@ class LoginViewModel(
         viewModelScope.launch {
             authRepository.signInAnonymously().onFailure {
                 _uiState.update {
-                    LoginUiState(errorMessage = "No pudimos entrar. Revisá tu conexión e intentá de nuevo.")
+                    LoginUiState(
+                        errorMessage = "No pudimos entrar. Revisá tu conexión e intentá de nuevo.",
+                    )
                 }
             }
             // Si sale bien, authState cambia y el NavHost navega solo
