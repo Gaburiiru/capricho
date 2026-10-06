@@ -74,6 +74,7 @@ kotlin {
             implementation(libs.supabase.postgrest)
             implementation(libs.settings.core)
             implementation(libs.settings.noarg)
+            implementation(libs.navigation.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

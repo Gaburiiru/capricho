@@ -19,15 +19,16 @@ Proyecto desarrollado para el **Challenge Técnico - Software Engineer Mobile (A
 3. [Historia de usuario](#-historia-de-usuario)
 4. [Funcionalidades](#-funcionalidades)
 5. [Flujo principal y lógica de cálculo](#-flujo-principal-y-lógica-de-cálculo)
-6. [Especificaciones técnicas](#-especificaciones-técnicas)
-7. [Arquitectura y por qué la elegí](#-arquitectura-y-por-qué-la-elegí)
-8. [Modelo de datos (Supabase)](#-modelo-de-datos-supabase)
-9. [Uso de IA en el desarrollo](#-uso-de-ia-en-el-desarrollo)
-10. [Cómo compilar y correr el proyecto](#-cómo-compilar-y-correr-el-proyecto)
-11. [Testing y CI](#-testing-y-ci)
-12. [Roadmap y plan de commits](#-roadmap-y-plan-de-commits)
-13. [Funcionalidades futuras](#-funcionalidades-futuras)
-14. [Decisiones y trade-offs](#-decisiones-y-trade-offs)
+6. [Sesión, login y limitaciones conocidas](#-sesión-login-y-limitaciones-conocidas)
+7. [Especificaciones técnicas](#-especificaciones-técnicas)
+8. [Arquitectura y por qué la elegí](#-arquitectura-y-por-qué-la-elegí)
+9. [Modelo de datos (Supabase)](#-modelo-de-datos-supabase)
+10. [Uso de IA en el desarrollo](#-uso-de-ia-en-el-desarrollo)
+11. [Cómo compilar y correr el proyecto](#-cómo-compilar-y-correr-el-proyecto)
+12. [Testing y CI](#-testing-y-ci)
+13. [Roadmap y plan de commits](#-roadmap-y-plan-de-commits)
+14. [Funcionalidades futuras](#-funcionalidades-futuras)
+15. [Decisiones y trade-offs](#-decisiones-y-trade-offs)
 
 ---
 
@@ -79,7 +80,9 @@ Principios de producto:
 ## ✨ Funcionalidades
 
 ### Core principal (MVP obligatorio)
-- [ ] Login con Google (Supabase Auth)
+- [x] Splash y navegación (Splash → Login → Home) con **sesión persistente**
+- [x] Botón **"Saltar"**: entra con una sesión anónima de Supabase
+- [ ] Login con Google (Supabase Auth, **nativo en Android**; ver [limitaciones](#-sesión-login-y-limitaciones-conocidas))
 - [ ] Onboarding (nombre + sueldo actual) persistido en Supabase
 - [ ] Home "Capricho" con mascota animada
 - [ ] Ingreso de monto con teclado numérico propio
@@ -178,6 +181,36 @@ El mensaje al usuario siempre es **informativo y amable** (ej: *"Es un gasto gra
 
 ---
 
+## 🔐 Sesión, login y limitaciones conocidas
+
+### Flujo de arranque
+
+```mermaid
+flowchart TD
+    A[App abre] --> B["Splash (siempre, mínimo 1,5 s)"]
+    B --> C{¿Hay sesión guardada?}
+    C -- Sí --> H[Home]
+    C -- No --> L[Login]
+    L -- Continuar con Google --> S[Sesión creada]
+    L -- Saltar --> S
+    S --> H
+```
+
+- La **Splash se muestra siempre** y espera a que Supabase termine de cargar la sesión guardada. El **Login solo aparece si no hay sesión**.
+- **Única fuente de verdad:** el estado de sesión de Supabase. `SessionViewModel` lo expone como `AuthState` (`Loading`, `SignedIn`, `SignedOut`) y `AppNavHost` navega en función de ese estado, también cuando la sesión se cierra o vence. Ninguna pantalla decide por su cuenta a dónde ir.
+- **Persistencia:** `supabase-kt` guarda y restaura la sesión entre ejecuciones de la app.
+- **Onboarding (próximo):** seguirá la misma lógica de "solo la primera vez". Se mostrará únicamente si el usuario **no tiene fila en `profiles`**, de modo que la fuente de verdad queda en Supabase y no en una bandera local.
+
+### Limitaciones conocidas
+
+| Limitación | Detalle | Mitigación / futuro |
+|---|---|---|
+| **Google solo en Android** | El login con Google usa el flujo nativo de Android (Credential Manager, vía `compose-auth`). En iOS, `compose-auth` solo ofrece login nativo con **Apple**; Google en iOS requeriría un flujo por navegador con deep links o el SDK de Google. **No está implementado ni verificado en iOS** (no hubo acceso a macOS). | En iOS el botón de Google muestra un mensaje y el usuario puede usar **"Saltar"**. |
+| **Usuario anónimo pierde sus datos** | Quien entra con **"Saltar"** tiene una sesión sin credenciales: si **desinstala la app o cierra sesión**, no puede recuperar su cuenta y **pierde sus datos** (gastos, metas y perfil). | Iniciar sesión con Google evita el problema. Futuro: **vincular la cuenta anónima a una identidad de Google** para conservar los datos. |
+| **Login anónimo habilitado** | Es necesario para el botón "Saltar" y permite crear usuarios sin registro. | RLS garantiza que cada usuario accede solo a sus filas. Futuro: límites de tasa o CAPTCHA si se publicara. |
+
+---
+
 ## 🛠 Especificaciones técnicas
 
 ### Stack
@@ -191,7 +224,7 @@ El mensaje al usuario siempre es **informativo y amable** (ej: *"Es un gasto gra
 | Estado | `ViewModel` multiplataforma + `StateFlow` (UDF) |
 | DI | Koin |
 | Backend / BaaS | Supabase (Auth + Postgres + RLS) con `supabase-kt` |
-| Login | Google Sign-In vía Supabase Auth |
+| Login | Google nativo en Android (`compose-auth`) + sesión anónima ("Saltar"), ambos vía Supabase Auth |
 | Red | Ktor Client (engines `OkHttp` en Android y `Darwin` en iOS) |
 | Serialización | `kotlinx.serialization` |
 | Fechas | `kotlinx-datetime` |
@@ -204,7 +237,7 @@ El mensaje al usuario siempre es **informativo y amable** (ej: *"Es un gasto gra
 > ⚠️ Todas las librerías elegidas son compatibles con KMP/CMP. Se evitan dependencias exclusivas de Android (Hilt, Retrofit, Room, Coil 2, etc.).
 
 ### Seguridad de las claves
-- Las **claves públicas** de Supabase (`URL` y `anon key`) se leen desde `local.properties` / variables de entorno (no se commitean).
+- Las **claves públicas** de Supabase (`URL` y `publishable key`) se leen desde `local.properties` / variables de entorno (no se commitean).
 - La **API key de Gemini no debe vivir en el cliente** en producción. Para el challenge se usa una **Supabase Edge Function** como proxy (la app llama a la función con el JWT del usuario y la función llama a Gemini). Si el tiempo no alcanza, se deja la key en `local.properties` y se documenta como deuda técnica.
 - Todas las tablas usan **Row Level Security**: cada usuario solo ve sus datos.
 
@@ -391,26 +424,29 @@ El challenge pide orquestar IA, no copiar y pegar. Mi flujo de trabajo:
 - **Xcode 15+** y macOS (solo para correr iOS)
 - Cuenta gratuita de **Supabase** y una API key de **Gemini** (Google AI Studio)
 
-> ℹ️ **Sobre iOS:** el proyecto desarrolla y verifica en Android. Compilar y probar iOS requiere macOS + Xcode. En Windows/Linux, Gradle muestra el aviso *"iosSimulatorArm64Test is disabled"*; es esperable y se silencia con `kotlin.native.ignoreDisabledTargets=true` en `gradle.properties`.
+> ℹ️ **Sobre iOS:** el proyecto desarrolla y verifica en Android. Compilar y probar iOS requiere macOS + Xcode. En Windows/Linux, Gradle muestra el aviso *"iosSimulatorArm64Test is disabled"*; es esperable y se silencia con `kotlin.native.ignoreDisabledTargets=true` en `gradle.properties`. El login con Google tampoco está disponible en iOS (ver [limitaciones conocidas](#-sesión-login-y-limitaciones-conocidas)); en esa plataforma se entra con **"Saltar"**.
 
 ### 1. Clonar
 ```bash
-git clone https://github.com/Gaburiiru/capricho.git
+git clone https://github.com/<tu-usuario>/capricho.git
 cd capricho
 ```
 
 ### 2. Configurar Supabase
 1. Crear un proyecto en [supabase.com](https://supabase.com).
 2. Ejecutar las migraciones de `supabase/migrations/` en el SQL Editor.
-3. En *Authentication → Providers* habilitar **Google** y cargar el Client ID/Secret de Google Cloud.
-4. Copiar la **Project URL** y la **anon key**.
+3. En *Authentication → Sign In / Providers*:
+   - Habilitar **Allow anonymous sign-ins** (necesario para el botón "Saltar").
+   - Habilitar **Google** y cargar el Client ID/Secret (cliente *Web*) de Google Cloud.
+   - Apretar **Save changes** en cada cambio: si no se guarda, el servidor sigue con la configuración anterior.
+4. Copiar la **Project URL** y la **publishable key** (Project Settings → API Keys).
 
 ### 3. Variables de entorno
 Crear `local.properties` en la raíz (está en `.gitignore`):
 
 ```properties
 SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 GOOGLE_WEB_CLIENT_ID=xxxx.apps.googleusercontent.com
 # Solo si no usás la Edge Function proxy:
 GEMINI_API_KEY=AIza...
@@ -495,18 +531,25 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `chore: agregar Koin y Ktor al proyecto KMP`
 - [x] `chore: eliminar código de ejemplo del template`
 - [x] `feat(design): tema, paleta y tipografías`
-- [x] `feat(design): componentes base (Pill, NumPad, Mascot)`
+- [x] `feat(design): mascota pixel art con estados`
+- [ ] `feat(design): Pill y NumPad` (se arman junto a la pantalla que los usa)
 - [x] `chore(ci): workflow de GitHub Actions`
 
 ### Fase 1 · Dominio (con tests)
 - [x] `feat(domain): modelos Expense, Goal, Profile`
-- [x] `feat(domain): ImpactCalculator (% sueldo, % meta, cuotas)`
+- [x] `feat(domain): ImpactCalculator con impacto sobre sueldo y cuotas`
 - [x] `feat(domain): DurabilityPolicy y semáforo`
 - [x] `test(domain): casos de borde del cálculo`
+- [x] `feat(domain): impacto sobre metas y atraso en meses`
 
 ### Fase 2 · Backend y sesión
 - [x] `feat(supabase): esquema SQL + RLS`
-- [ ] `feat(auth): login con Google`
+- [x] `feat(supabase): cliente de Supabase y claves desde local.properties`
+- [x] `feat(auth): AuthRepository y estado de sesión`
+- [x] `feat(navigation): NavHost con rutas Splash, Login y Home`
+- [x] `feat(splash): pantalla de splash con mascota`
+- [x] `feat(auth): pantalla de login con opción de saltar`
+- [ ] `feat(auth): login con Google nativo (Android)`
 - [ ] `feat(onboarding): nombre + sueldo, persistido en Supabase`
 
 ### Fase 3 · Core principal
@@ -562,6 +605,9 @@ Fuera del alcance del challenge, pero **contempladas en el diseño de datos**:
 | Tags/pills en vez de campos de texto | Formulario clásico | Menor fricción, mejor UX en mobile y datos más limpios |
 | Proxy de Gemini vía Edge Function | Key en el cliente | Nunca exponer secretos en una app distribuida |
 | Core secundario al final | Hacerlo en paralelo | El flujo "Capricho" es el diferencial y lo imprescindible |
+| "Saltar" con sesión anónima de Supabase | Modo invitado sin sesión | Mantiene RLS y el mismo flujo de datos, y evita bloquear a quien no pueda usar Google (por ejemplo, quien evalúa la app). Costo: los datos se pierden al desinstalar o cerrar sesión |
+| Google nativo solo en Android | Flujo por navegador con deep links en ambas plataformas | Menos configuración y mejor experiencia; iOS no se puede verificar sin macOS, así que se documenta en vez de dejarlo a medias |
+| El estado de sesión decide la navegación | Que cada pantalla decida a dónde ir | Evita rutas inconsistentes al vencer o cerrar la sesión |
 
 ---
 

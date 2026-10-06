@@ -19,6 +19,7 @@ kotlinx-datetime = "0.8.0"
 supabase = "3.8.0"
 buildkonfig = "0.23.0"
 multiplatformSettings = "1.3.0"
+navigation = "2.9.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -53,6 +54,7 @@ supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
 supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 settings-core = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 settings-noarg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
