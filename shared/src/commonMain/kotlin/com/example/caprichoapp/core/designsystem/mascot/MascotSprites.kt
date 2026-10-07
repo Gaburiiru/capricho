@@ -56,6 +56,32 @@ object MascotSprites {
         ears2 = ".BBBBHHBBBB.",
     )
 
+    // Preocupado: Ojos angustiados y boca apretada
+    private val worried1 = face(
+        eyeTop = "BB.KBBBB.KBB",
+        eyeBottom = "BKKBBBBKKBBB",
+        mouth = "BBBBKKKKBBBB",
+    )
+    private val worried2 = face(
+        eyeTop = "BB.KBBBB.KBB",
+        eyeBottom = "BKKBBBBKKBBB",
+        mouth = "BBBBBKKBBBBB",
+    )
+
+    // Triste: Ojos caídos y boca hacia abajo
+    private val sad1 = face(
+        eyeTop = "BBKKBBBBKKBB",
+        eyeBottom = "BBBKKBBBBKKB",
+        mouth = "BBBBBKKBBBBB",
+        chin = ".BBBKKKKBBB.",
+    )
+    private val sad2 = face(
+        eyeTop = "BBBKKBBBBKKB",
+        eyeBottom = "BBKKBBBBKKBB",
+        mouth = "BBBBBKKBBBBB",
+        chin = ".BBBKKKKBBB.",
+    )
+
     fun framesFor(mood: MascotMood): List<SpriteFrame> = when (mood) {
         MascotMood.Idle -> listOf(
             SpriteFrame(idleOpen, 2_000),
@@ -80,7 +106,13 @@ object MascotSprites {
             SpriteFrame(happySpark, 320),
             SpriteFrame(happy, 320),
         )
-        // TODO: Worried y Sad (se arman junto a la pantalla de impacto)
-        MascotMood.Worried, MascotMood.Sad -> listOf(SpriteFrame(idleOpen, 1_000))
+        MascotMood.Worried -> listOf(
+            SpriteFrame(worried1, 500),
+            SpriteFrame(worried2, 500),
+        )
+        MascotMood.Sad -> listOf(
+            SpriteFrame(sad1, 800),
+            SpriteFrame(sad2, 400),
+        )
     }
 }

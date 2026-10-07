@@ -80,7 +80,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `con apodo, la interfaz usa el apodo`() = runTest {
+    fun `con apodo la interfaz usa el apodo`() = runTest {
         val vm = OnboardingViewModel(FakeProfileRepository())
 
         vm.onNameChange("Lucía Gómez")

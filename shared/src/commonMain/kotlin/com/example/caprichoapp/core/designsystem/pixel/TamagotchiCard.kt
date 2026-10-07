@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.caprichoapp.core.designsystem.pixelFontFamily
+import com.example.caprichoapp.core.designsystem.CaprichoTheme
 
 /**
  * Carcasa de "bicho virtual" de los 90: cuerpo rosa, pantalla LCD con líneas
@@ -35,7 +35,8 @@ import com.example.caprichoapp.core.designsystem.pixelFontFamily
 @Composable
 fun TamagotchiCard(
     modifier: Modifier = Modifier,
-    brand: String = "CAPRICHO",
+    brand: String? = "CAPRICHO",
+    showControls: Boolean = true,
     screenContent: @Composable BoxScope.(TamagotchiColors) -> Unit,
 ) {
     val colors = tamagotchiColors()
@@ -59,15 +60,14 @@ fun TamagotchiCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = brand,
-                color = colors.shellDark,
-                fontFamily = pixelFontFamily(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                letterSpacing = 3.sp,
-            )
-            Spacer(Modifier.height(10.dp))
+            if (brand != null) {
+                Text(
+                    text = brand,
+                    color = colors.shellDark,
+                    style = CaprichoTheme.pixelText.tag.copy(letterSpacing = 3.sp),
+                )
+                Spacer(Modifier.height(10.dp))
+            }
 
             // Pantalla LCD
             Box(
@@ -94,11 +94,13 @@ fun TamagotchiCard(
                 screenContent(colors)
             }
 
-            Spacer(Modifier.height(14.dp))
-            // Botones decorativos
-            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                repeat(3) {
-                    Box(Modifier.size(20.dp).background(colors.shellDark, buttonShape))
+            if (showControls) {
+                Spacer(Modifier.height(14.dp))
+                // Botones decorativos
+                Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    repeat(3) {
+                        Box(Modifier.size(20.dp).background(colors.shellDark, buttonShape))
+                    }
                 }
             }
         }

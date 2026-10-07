@@ -23,11 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.caprichoapp.core.designsystem.pixelFontFamily
+import com.example.caprichoapp.core.designsystem.CaprichoTheme
 
 /**
  * Botón principal estilo arcade: esquinas escalonadas, sombra dura
@@ -38,15 +37,25 @@ fun PixelButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(3.dp) }
-    val shadowColor = if (isDarkTheme()) colors.primaryContainer else colors.onPrimaryContainer
+    val shadowColor = if (enabled) {
+        if (isDarkTheme()) colors.primaryContainer else colors.onPrimaryContainer
+    } else {
+        colors.outlineVariant
+    }
+    val buttonBg = if (enabled) colors.primary else colors.surfaceContainerHighest
+    val textColor = if (enabled) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.5f)
+
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val press by animateDpAsState(if (pressed) 4.dp else 0.dp, tween(60), label = "press")
+    val press by animateDpAsState(if (pressed && enabled) 4.dp else 0.dp, tween(60), label = "press")
 
-    Box(modifier.padding(end = 4.dp, bottom = 4.dp)) {
+    Box(
+        modifier = modifier.padding(end = 4.dp, bottom = 4.dp),
+    ) {
         Box(
             Modifier
                 .matchParentSize()
@@ -59,29 +68,31 @@ fun PixelButton(
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape)
-                .background(colors.primary, shape)
+                .background(buttonBg, shape)
                 .clickable(
+                    enabled = enabled,
                     interactionSource = interaction,
                     indication = null,
                     role = Role.Button,
                     onClick = onClick,
-                ),
+                )
+                .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = text.uppercase(),
-                    color = colors.onPrimary,
-                    fontFamily = pixelFontFamily(),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    color = textColor,
+                    style = CaprichoTheme.pixelText.button.copy(fontSize = 14.sp),
+                    maxLines = 1,
+                    softWrap = false,
                 )
                 PixelIconImage(
                     icon = PixelIcon.ArrowRight,
-                    tint = colors.onPrimary,
+                    tint = textColor,
                     modifier = Modifier.height(14.dp).width(10.dp),
                 )
             }

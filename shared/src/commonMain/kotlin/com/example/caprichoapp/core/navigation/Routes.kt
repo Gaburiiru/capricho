@@ -20,3 +20,7 @@ data object GoalsRoute
 data object HomeRoute
 @Serializable
 data object ProfileRoute
+
+// ---- Flujo de Predicción ----
+@Serializable
+data object PredictCaprichoRoute

@@ -33,10 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
@@ -47,7 +45,7 @@ import com.example.caprichoapp.core.designsystem.pixel.PixelIconImage
 import com.example.caprichoapp.core.designsystem.pixel.PixelTypewriterText
 import com.example.caprichoapp.core.designsystem.pixel.TamagotchiCard
 import com.example.caprichoapp.core.designsystem.pixel.TamagotchiColors
-import com.example.caprichoapp.core.designsystem.pixelFontFamily
+import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -111,8 +109,7 @@ fun HomeScreen(
             Text(
                 text = "Tocá a $MASCOT_NAME para saludarlo",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = pixelFontFamily(),
-                fontSize = 10.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -174,12 +171,7 @@ private fun CaprichoDevice() {
             Spacer(Modifier.height(10.dp))
             PixelTypewriterText(
                 text = DEVICE_MESSAGES[messageIndex],
-                style = TextStyle(
-                    fontFamily = pixelFontFamily(),
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
-                ),
+                style = CaprichoTheme.pixelText.lcd,
                 color = device.lcdInk,
                 minLines = 4,
                 modifier = Modifier.fillMaxWidth(),
@@ -205,10 +197,7 @@ private fun LcdStatusRow(device: TamagotchiColors) {
         Text(
             text = MASCOT_NAME.uppercase(),
             color = device.lcdInk,
-            fontFamily = pixelFontFamily(),
-            fontWeight = FontWeight.Bold,
-            fontSize = 10.sp,
-            letterSpacing = 2.sp,
+            style = CaprichoTheme.pixelText.tag,
         )
     }
 }

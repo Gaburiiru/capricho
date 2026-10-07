@@ -81,6 +81,62 @@ enum class PixelIcon(val rows: List<String>) {
             "X....",
         ),
     ),
+    Check(
+        listOf(
+            ".......X",
+            "......XX",
+            ".....XXX",
+            "X...XXXX",
+            "XX.XXXX.",
+            "XXXXXX..",
+            ".XXXX...",
+            "..XX....",
+        ),
+    ),
+    ArrowLeft(
+        listOf(
+            "....X",
+            "...XX",
+            "..XXX",
+            ".XXXX",
+            "..XXX",
+            "...XX",
+            "....X",
+        ),
+    ),
+    Backspace(
+        listOf(
+            "...XXXXXXXX",
+            "..X.......X",
+            ".X..X...X.X",
+            "X.....X...X",
+            ".X..X...X.X",
+            "..X.......X",
+            "...XXXXXXXX",
+        ),
+    ),
+    Trash(
+        listOf(
+            "..XXXXX..",
+            "..X...X..",
+            "XXXXXXXXX",
+            ".X.X.X.X.",
+            ".X.X.X.X.",
+            ".X.X.X.X.",
+            ".XXXXXXX.",
+        ),
+    ),
+    Cross(
+        listOf(
+            "X.....X",
+            ".X...X.",
+            "..X.X..",
+            "...X...",
+            "..X.X..",
+            ".X...X.",
+            "X.....X",
+        ),
+    ),
 }
 
 @Composable

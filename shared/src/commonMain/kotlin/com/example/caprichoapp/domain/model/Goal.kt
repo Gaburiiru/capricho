@@ -1,10 +1,10 @@
 package com.example.caprichoapp.domain.model
 
 data class Goal(
-    val id: String,
+    val id: String = "",
     val title: String,
     val targetAmount: Double,
-    val savedAmount: Double,
+    val savedAmount: Double = 0.0,
     val installments: Int = 1,
     val durability: Durability,
     val status: GoalStatus = GoalStatus.ACTIVE,

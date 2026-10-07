@@ -82,14 +82,14 @@ Principios de producto:
 ### Core principal (MVP obligatorio)
 - [x] Splash y navegación (Splash → Login → Home) con **sesión persistente**
 - [x] Botón **"Saltar"**: entra con una sesión anónima de Supabase
-- [ ] Login con Google (Supabase Auth, **nativo en Android**; ver [limitaciones](#-sesión-login-y-limitaciones-conocidas))
-- [ ] Onboarding (nombre, **apodo opcional** y sueldo mensual) persistido en Supabase; la interfaz usa el apodo si existe
-- [ ] Home "Capricho": bicho virtual estilo años 90 (pantalla LCD, mascota animada que habla y reacciona al toque) que invita a predecir el capricho
-- [ ] Barra de navegación inferior con íconos pixel art: Historial, Metas, Inicio y Perfil
-- [ ] Ingreso de monto con teclado numérico propio
-- [ ] Selección inmediato / cuotas con pills (1, 3, 6, 9, 12, 18, 24, otra)
-- [ ] Selección de durabilidad (fugaz / medio / alto)
-- [ ] Cálculo de impacto: % del sueldo y % de cada meta activa
+- [x] Login con Google (Supabase Auth, **nativo en Android**; ver [limitaciones](#-sesión-login-y-limitaciones-conocidas))
+- [x] Onboarding (nombre, **apodo opcional** y sueldo mensual) persistido en Supabase; la interfaz usa el apodo si existe
+- [x] Home "Capricho": bicho virtual estilo años 90 (pantalla LCD, mascota animada que habla y reacciona al toque) que invita a predecir el capricho
+- [x] Barra de navegación inferior con íconos pixel art: Historial, Metas, Inicio y Perfil
+- [x] Ingreso de monto con teclado numérico propio
+- [x] Selección inmediato / cuotas con pills (1, 3, 6, 9, 12, 18, 24, otra)
+- [x] Selección de durabilidad (fugaz / medio / alto)
+- [x] Cálculo de impacto: % del sueldo y % de cada meta activa
 - [ ] Guardar como **gasto** o como **meta**
 - [ ] Pantalla de **estrategia de ahorro** generada por IA (Gemini)
 
@@ -559,12 +559,12 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 ### Fase 3 · Core principal
 - [x] `feat(capricho): pantalla inicial con mascota animada`
 - [x] `feat(navigation): barra inferior con Historial, Metas, Inicio y Perfil`
-- [ ] `feat(capricho): ingreso de monto con teclado numérico`
-- [ ] `feat(capricho): inmediato/cuotas con pills`
-- [ ] `feat(capricho): durabilidad`
-- [ ] `feat(capricho): pantalla de impacto (% sueldo / % meta)`
+- [x] `feat(capricho): ingreso de monto con teclado numérico`
+- [x] `feat(capricho): inmediato/cuotas con pills`
+- [x] `feat(capricho): durabilidad`
+- [x] `feat(capricho): pantalla de impacto (% sueldo / % meta)`
 - [ ] `feat(expenses): guardar como gasto`
-- [ ] `feat(goals): guardar como meta`
+- [x] `feat(goals): guardar como meta`
 - [ ] `feat(strategy): estrategia de ahorro con Gemini + fallback`
 
 ### Fase 4 · Core secundario

@@ -23,6 +23,7 @@ import com.example.caprichoapp.feature.goals.GoalsScreen
 import com.example.caprichoapp.feature.history.HistoryScreen
 import com.example.caprichoapp.feature.home.HomeScreen
 import com.example.caprichoapp.feature.onboarding.OnboardingScreen
+import com.example.caprichoapp.feature.predict.PredictCaprichoScreen
 import com.example.caprichoapp.feature.profile.ProfileScreen
 import com.example.caprichoapp.feature.splash.SplashScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -91,7 +92,15 @@ fun AppNavHost(
                     OnboardingScreen(onSaved = sessionViewModel::onProfileSaved)
                 }
                 composable<HomeRoute> {
-                    HomeScreen(greetingName = profile?.shownName)
+                    HomeScreen(
+                        greetingName = profile?.shownName,
+                        onStartCapricho = { navController.navigate(PredictCaprichoRoute) },
+                    )
+                }
+                composable<PredictCaprichoRoute> {
+                    PredictCaprichoScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                    )
                 }
                 composable<HistoryRoute> { HistoryScreen() }
                 composable<GoalsRoute> { GoalsScreen() }
