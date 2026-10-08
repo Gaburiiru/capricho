@@ -6,6 +6,7 @@ import com.example.caprichoapp.domain.model.Durability
 import com.example.caprichoapp.domain.model.Goal
 import com.example.caprichoapp.domain.model.GoalStatus
 import com.example.caprichoapp.domain.repository.GoalRepository
+import com.example.caprichoapp.domain.repository.StrategyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 class GoalsViewModel(
     private val goalRepository: GoalRepository,
+    private val strategyRepository: StrategyRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GoalsUiState>(GoalsUiState.Loading)
@@ -27,6 +29,9 @@ class GoalsViewModel(
     private val _goalToDelete = MutableStateFlow<Goal?>(null)
     val goalToDelete: StateFlow<Goal?> = _goalToDelete.asStateFlow()
 
+    private val _canGenerateStrategy = MutableStateFlow(false)
+    val canGenerateStrategy: StateFlow<Boolean> = _canGenerateStrategy.asStateFlow()
+
     init {
         loadGoals()
     }
@@ -37,9 +42,13 @@ class GoalsViewModel(
             goalRepository.getGoals()
                 .onSuccess { goals ->
                     _uiState.value = GoalsUiState.Success(goals)
+                    strategyRepository.hasStoredExpenses()
+                        .onSuccess { hasExpenses -> _canGenerateStrategy.value = hasExpenses }
+                        .onFailure { _canGenerateStrategy.value = false }
                 }
                 .onFailure { error ->
                     _uiState.value = GoalsUiState.Error(error.message ?: "Error al cargar las metas")
+                    _canGenerateStrategy.value = false
                 }
         }
     }

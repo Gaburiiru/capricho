@@ -536,7 +536,7 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `chore: eliminar código de ejemplo del template`
 - [x] `feat(design): tema, paleta y tipografías`
 - [x] `feat(design): mascota pixel art con estados`
-- [ ] `feat(design): Pill y NumPad` (se arman junto a la pantalla que los usa)
+- [x] `feat(design): Pill y NumPad`
 - [x] `chore(ci): workflow de GitHub Actions`
 
 ### Fase 1 · Dominio (con tests)
@@ -563,14 +563,14 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [x] `feat(capricho): inmediato/cuotas con pills`
 - [x] `feat(capricho): durabilidad`
 - [x] `feat(capricho): pantalla de impacto (% sueldo / % meta)`
-- [ ] `feat(expenses): guardar como gasto`
+- [x] `feat(expenses): guardar como gasto`
 - [x] `feat(goals): guardar como meta`
-- [ ] `feat(strategy): estrategia de ahorro con Gemini + fallback`
+- [x] `feat(strategy): estrategia de ahorro con Gemini + fallback`
 
 ### Fase 4 · Core secundario
-- [ ] `feat(dashboard): gráfico de torta por categoría`
+- [x] `feat(dashboard): gráfico de torta por categoría`
 - [ ] `feat(dashboard): filtros semanal/mensual/anual`
-- [ ] `feat(history): historial de gastos`
+- [x] `feat(history): historial de gastos`
 - [ ] `feat(expenses): categorías y gasto hormiga`
 - [ ] `feat(profile): edición de sueldo y nombre`
 

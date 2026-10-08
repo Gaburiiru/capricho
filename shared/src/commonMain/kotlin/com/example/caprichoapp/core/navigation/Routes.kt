@@ -24,3 +24,7 @@ data object ProfileRoute
 // ---- Flujo de Predicción ----
 @Serializable
 data object PredictCaprichoRoute
+
+// ---- Estrategia de ahorro ----
+@Serializable
+data class StrategyRoute(val goalId: String)

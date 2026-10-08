@@ -41,6 +41,7 @@ import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
 import com.example.caprichoapp.core.designsystem.pixel.PixelButton
 import com.example.caprichoapp.core.designsystem.pixel.PixelIcon
+import com.example.caprichoapp.core.designsystem.pixel.PixelIconButton
 import com.example.caprichoapp.core.designsystem.pixel.PixelIconImage
 import com.example.caprichoapp.core.designsystem.pixel.PixelTypewriterText
 import com.example.caprichoapp.core.designsystem.pixel.TamagotchiCard
@@ -57,6 +58,55 @@ private val DEVICE_MESSAGES = listOf(
     "¡Hola! Soy $MASCOT_NAME. ¿Qué capricho se te antoja hoy?",
     "Contame cuánto cuesta y te digo cuánto pesa en tu bolsillo.",
     "Sin culpa: lo planeamos juntos y vos decidís.",
+)
+
+private data class MascotTvChannel(
+    val mood: MascotMood,
+    val title: String,
+    val messages: List<String>?,
+)
+
+private val TV_CHANNELS = listOf(
+    MascotTvChannel(
+        mood = MascotMood.Idle,
+        title = "Inicio",
+        messages = DEVICE_MESSAGES,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Thinking,
+        title = "Pensando",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Happy,
+        title = "Feliz",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Worried,
+        title = "Preocupado",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Sad,
+        title = "Triste",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Panicked,
+        title = "Pánico",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Crazy,
+        title = "Fuego / Locura",
+        messages = null,
+    ),
+    MascotTvChannel(
+        mood = MascotMood.Celebrating,
+        title = "Festejo",
+        messages = null,
+    ),
 )
 
 /**
@@ -143,47 +193,108 @@ private fun GreetingHeader(name: String?) {
     }
 }
 
-/** El "bicho virtual": mascota animada que habla y rota entre sus mensajes. */
+/** El "bicho virtual": pantalla de TV retro con botones de cambio de canal y animaciones de la mascota. */
 @Composable
 private fun CaprichoDevice() {
+    var channelIndex by rememberSaveable { mutableIntStateOf(0) }
     var typing by remember { mutableStateOf(true) }
     var messageIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    // Cuando termina de escribir, espera un rato y pasa al mensaje siguiente
-    LaunchedEffect(messageIndex, typing) {
-        if (!typing) {
+    val currentChannel = TV_CHANNELS[channelIndex]
+    val channelNumberText = "${channelIndex + 1}/${TV_CHANNELS.size}"
+
+    // Cuando cambia de canal, reinicia la animación de escritura
+    LaunchedEffect(channelIndex) {
+        messageIndex = 0
+        typing = true
+    }
+
+    // Rotación de mensajes si el canal actual los tiene
+    val messages = currentChannel.messages
+    LaunchedEffect(channelIndex, messageIndex, typing) {
+        if (messages != null && !typing) {
             delay(HOLD_BETWEEN_MESSAGES_MS)
-            messageIndex = (messageIndex + 1) % DEVICE_MESSAGES.size
+            messageIndex = (messageIndex + 1) % messages.size
+            typing = true
         }
+    }
+
+    val moodToDisplay = if (currentChannel.mood == MascotMood.Idle && typing) {
+        MascotMood.Talking
+    } else {
+        currentChannel.mood
     }
 
     TamagotchiCard(Modifier.fillMaxWidth()) { device ->
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            LcdStatusRow(device)
-            Spacer(Modifier.height(6.dp))
-            Mascot(
-                mood = if (typing) MascotMood.Talking else MascotMood.Idle,
-                modifier = Modifier.size(132.dp),
-            )
-            Spacer(Modifier.height(10.dp))
-            PixelTypewriterText(
-                text = DEVICE_MESSAGES[messageIndex],
-                style = CaprichoTheme.pixelText.lcd,
-                color = device.lcdInk,
-                minLines = 4,
+            LcdStatusRow(device = device, channelText = channelNumberText)
+
+            Spacer(Modifier.height(8.dp))
+
+            // Fila central: Flecha Izquierda | Mascota | Flecha Derecha
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                onTypingChanged = { typing = it },
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                PixelIconButton(
+                    icon = PixelIcon.ArrowLeft,
+                    contentDescription = "Anterior",
+                    onClick = {
+                        channelIndex = (channelIndex - 1 + TV_CHANNELS.size) % TV_CHANNELS.size
+                    },
+                    buttonSize = 36.dp,
+                )
+
+                Mascot(
+                    mood = moodToDisplay,
+                    modifier = Modifier.size(116.dp),
+                )
+
+                PixelIconButton(
+                    icon = PixelIcon.ArrowRight,
+                    contentDescription = "Siguiente",
+                    onClick = {
+                        channelIndex = (channelIndex + 1) % TV_CHANNELS.size
+                    },
+                    buttonSize = 36.dp,
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            if (messages != null && messages.isNotEmpty()) {
+                PixelTypewriterText(
+                    text = messages[messageIndex % messages.size],
+                    style = CaprichoTheme.pixelText.lcd,
+                    color = device.lcdInk,
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth(),
+                    onTypingChanged = { typing = it },
+                )
+            } else {
+                Text(
+                    text = currentChannel.title,
+                    style = CaprichoTheme.pixelText.tag,
+                    color = device.lcdInk,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                )
+            }
         }
     }
 }
 
-/** Fila superior de la pantalla: corazones (a futuro, salud financiera) y el nombre del bicho. */
+/** Fila superior de la pantalla: corazones y el numeral del canal (ej. 1/8). */
 @Composable
-private fun LcdStatusRow(device: TamagotchiColors) {
+private fun LcdStatusRow(device: TamagotchiColors, channelText: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -195,7 +306,7 @@ private fun LcdStatusRow(device: TamagotchiColors) {
             }
         }
         Text(
-            text = MASCOT_NAME.uppercase(),
+            text = channelText,
             color = device.lcdInk,
             style = CaprichoTheme.pixelText.tag,
         )

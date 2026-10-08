@@ -3,6 +3,8 @@ package com.example.caprichoapp.feature.goals
 import com.example.caprichoapp.data.repository.InMemoryGoalRepository
 import com.example.caprichoapp.domain.model.Durability
 import com.example.caprichoapp.domain.model.GoalStatus
+import com.example.caprichoapp.domain.model.StrategyResponse
+import com.example.caprichoapp.domain.repository.StrategyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -27,7 +29,13 @@ class GoalsViewModelTest {
     @Test
     fun testAddUpdateAndDeleteGoal() = runTest {
         val repo = InMemoryGoalRepository()
-        val vm = GoalsViewModel(repo)
+        val strategyRepo = object : StrategyRepository {
+            override suspend fun getSavingsStrategy(goalId: String): Result<StrategyResponse> =
+                Result.failure(NotImplementedError())
+
+            override suspend fun hasStoredExpenses(): Result<Boolean> = Result.success(true)
+        }
+        val vm = GoalsViewModel(repo, strategyRepo)
 
         // Initially success with empty list
         val initialState = vm.uiState.value

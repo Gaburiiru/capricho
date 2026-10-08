@@ -2,6 +2,7 @@ package com.example.caprichoapp.feature.predict
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.caprichoapp.core.util.appendAmountDigit
 import com.example.caprichoapp.domain.calculator.ImpactCalculator
 import com.example.caprichoapp.domain.model.Durability
 import com.example.caprichoapp.domain.model.Goal
@@ -14,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** El monto del capricho llega hasta 99.999.999. */
+private const val MAX_CAPRICHO_DIGITS = 8
 
 class PredictCaprichoViewModel(
     private val profileRepository: ProfileRepository,
@@ -32,10 +36,8 @@ class PredictCaprichoViewModel(
     }
 
     fun onDigitInput(digit: Char) {
-        if (!digit.isDigit()) return
         _state.update { current ->
-            if (current.rawAmount.length >= 8) current
-            else current.copy(rawAmount = current.rawAmount + digit)
+            current.copy(rawAmount = current.rawAmount.appendAmountDigit(digit, MAX_CAPRICHO_DIGITS))
         }
     }
 
@@ -146,6 +148,16 @@ class PredictCaprichoViewModel(
         val isInstallment = state.installments > 1
 
         val (verdict, message, summary) = when {
+            impactPercent > 150.0 -> Triple(
+                RecommendationVerdict.HEAVY_CAPRICHO,
+                "¡LOCURA TOTAL! ¡Este gasto supera el 150% de tu sueldo mensual! ¡Tus finanzas van a volar por los aires!",
+                "Peligro financiero extremo: el costo sobrepasa enormemente tu capacidad de pago mensual.",
+            )
+            impactPercent > 100.0 -> Triple(
+                RecommendationVerdict.HEAVY_CAPRICHO,
+                "¡PÁNICO! Este capricho supera el 100% de tu sueldo del mes. ¡Superás completamente tu presupuesto!",
+                "Alerta crítica: necesitarías más de un sueldo entero para cubrir este egreso.",
+            )
             durability == Durability.HIGH && impactPercent <= 15.0 -> Triple(
                 RecommendationVerdict.GREAT_CAPRICHO,
                 "¡Excelente inversión! Te va a durar un montón y no desarma tu bolsillo.",

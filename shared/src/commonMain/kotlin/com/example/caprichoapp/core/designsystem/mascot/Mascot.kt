@@ -69,6 +69,8 @@ fun Mascot(
             'P' to colors.secondary,
             'N' to colors.onPrimaryContainer,
             'H' to colors.secondary,
+            'T' to androidx.compose.ui.graphics.Color(0xFF38BDF8), // Lágrimas azules
+            'F' to androidx.compose.ui.graphics.Color(0xFFEF4444), // Fuego rojo
         )
     }
 

@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.toRoute
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -26,6 +27,7 @@ import com.example.caprichoapp.feature.onboarding.OnboardingScreen
 import com.example.caprichoapp.feature.predict.PredictCaprichoScreen
 import com.example.caprichoapp.feature.profile.ProfileScreen
 import com.example.caprichoapp.feature.splash.SplashScreen
+import com.example.caprichoapp.feature.strategy.StrategyScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -103,7 +105,18 @@ fun AppNavHost(
                     )
                 }
                 composable<HistoryRoute> { HistoryScreen() }
-                composable<GoalsRoute> { GoalsScreen() }
+                composable<GoalsRoute> {
+                    GoalsScreen(
+                        onOpenStrategy = { goalId -> navController.navigate(StrategyRoute(goalId)) },
+                    )
+                }
+                composable<StrategyRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<StrategyRoute>()
+                    StrategyScreen(
+                        goalId = route.goalId,
+                        onNavigateBack = { navController.popBackStack() },
+                    )
+                }
                 composable<ProfileRoute> {
                     ProfileScreen(
                         profile = profile,

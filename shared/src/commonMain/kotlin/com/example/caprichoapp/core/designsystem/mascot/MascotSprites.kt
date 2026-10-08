@@ -9,7 +9,7 @@ data class SpriteFrame(val rows: List<String>, val durationMs: Long)
 object MascotSprites {
     const val WIDTH = 12
     const val HEIGHT = 10
-    const val VALID_CHARS = ".BKPNH"
+    const val VALID_CHARS = ".BKPNHTF"
 
     // Piezas reutilizables de la cara
     private const val EARS_1 = "..BB....BB.."
@@ -68,18 +68,98 @@ object MascotSprites {
         mouth = "BBBBBKKBBBBB",
     )
 
-    // Triste: Ojos caídos y boca hacia abajo
-    private val sad1 = face(
-        eyeTop = "BBKKBBBBKKBB",
-        eyeBottom = "BBBKKBBBBKKB",
-        mouth = "BBBBBKKBBBBB",
-        chin = ".BBBKKKKBBB.",
+    // Triste: Ojos caídos, boca triste y lágrimas azules 'T'
+    private val sad1 = listOf(
+        "..BB....BB..",
+        ".BBBB..BBBB.",
+        "BBBBBBBBBBBB",
+        "BBKKBBBBKKBB",
+        "BBBKKBBBBKKB",
+        "BPTBBNNBBPTB",
+        "BBTBBNNBBBTB",
+        "BBBBBKKBBBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
     )
-    private val sad2 = face(
-        eyeTop = "BBBKKBBBBKKB",
-        eyeBottom = "BBKKBBBBKKBB",
-        mouth = "BBBBBKKBBBBB",
-        chin = ".BBBKKKKBBB.",
+    private val sad2 = listOf(
+        "..BB....BB..",
+        ".BBBB..BBBB.",
+        "BBBBBBBBBBBB",
+        "BBBKKBBBBKKB",
+        "BBKKBBBBKKBB",
+        "BBPTBNNBBPTB",
+        "BBBTBNNBBBTB",
+        "BBBBBKKBBBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
+    )
+
+    // Pánico: Ojos gigantes desorbitados (gasto >100% del sueldo)
+    private val panicked1 = face(
+        eyeTop = "BKKKBBBBKKKB",
+        eyeBottom = "BKKKBBBBKKKB",
+        mouth = "BBBKKKKKKBBB",
+        ears1 = EARS_1,
+        ears2 = EARS_2,
+    )
+    private val panicked2 = face(
+        eyeTop = "BBKKKBBKKKBB",
+        eyeBottom = "BBKKKBBKKKBB",
+        mouth = "BBBBKKKKBBBB",
+        ears1 = EARS_1,
+        ears2 = EARS_2,
+    )
+
+    // Locura: Cabeza prendida fuego con llamas de varios tonos (gasto >150% del sueldo)
+    private val fireHead1 = listOf(
+        ".F.H....F.H.",
+        "FHHHBBBBFHHH",
+        "BBBBBBBBBBBB",
+        "BKKBBBBKKBBB",
+        "BBKKBBBBKKBB",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBBKKKKBBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
+    )
+    private val fireHead2 = listOf(
+        "H.F.H..H.F.H",
+        ".FHHH..FHHH.",
+        "BBBBBBBBBBBB",
+        "BBBKKBBBBKKB",
+        "BBKKBBBBKKBB",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBBKKKKBBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
+    )
+
+    // Festejo: Sombrerito de cumpleaños en cono, destellos y sonrisa eufórica
+    private val celebrate1 = listOf(
+        ".....H......",
+        "....HHH.....",
+        "BBBBFFFFBBBB",
+        "HBBKBBBBKBBH",
+        "HBBKBKBBKBKH",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBBKKKKBBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
+    )
+    private val celebrate2 = listOf(
+        ".....F......",
+        "....HHF.....",
+        "BBBBFFFFBBBB",
+        ".BBKBBBBKBB.",
+        ".BBKBKBBKBK.",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBKKKKKKBBB",
+        ".BBBKKKKBBB.",
+        "..BBBBBBBB..",
     )
 
     fun framesFor(mood: MascotMood): List<SpriteFrame> = when (mood) {
@@ -113,6 +193,18 @@ object MascotSprites {
         MascotMood.Sad -> listOf(
             SpriteFrame(sad1, 800),
             SpriteFrame(sad2, 400),
+        )
+        MascotMood.Panicked -> listOf(
+            SpriteFrame(panicked1, 250),
+            SpriteFrame(panicked2, 250),
+        )
+        MascotMood.Crazy -> listOf(
+            SpriteFrame(fireHead1, 180),
+            SpriteFrame(fireHead2, 180),
+        )
+        MascotMood.Celebrating -> listOf(
+            SpriteFrame(celebrate1, 220),
+            SpriteFrame(celebrate2, 220),
         )
     }
 }

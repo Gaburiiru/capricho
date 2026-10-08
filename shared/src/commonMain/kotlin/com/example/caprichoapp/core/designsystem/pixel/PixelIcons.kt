@@ -126,6 +126,29 @@ enum class PixelIcon(val rows: List<String>) {
             ".XXXXXXX.",
         ),
     ),
+    Edit(
+        listOf(
+            "......XX.",
+            ".....XXXX",
+            "....XXXX.",
+            "...XXXX..",
+            "..XXXX...",
+            ".XXXX....",
+            "XXXX.....",
+            "XXX......",
+        ),
+    ),
+    Plus(
+        listOf(
+            "...XXX...",
+            "...XXX...",
+            "XXXXXXXXX",
+            "XXXXXXXXX",
+            "XXXXXXXXX",
+            "...XXX...",
+            "...XXX...",
+        ),
+    ),
     Cross(
         listOf(
             "X.....X",

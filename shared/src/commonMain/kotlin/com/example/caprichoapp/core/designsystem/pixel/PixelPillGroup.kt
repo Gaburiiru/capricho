@@ -61,8 +61,8 @@ fun <T> PixelPillGroup(
 ) {
     val perRow = columns.coerceAtLeast(1)
     val tiles = perRow > 1
-    val minItemHeight = if (tiles) 104.dp else 88.dp
-    val maxItemHeight = if (tiles) 150.dp else 132.dp
+    val minItemHeight = if (tiles) 88.dp else 76.dp
+    val maxItemHeight = if (tiles) 112.dp else 96.dp
     val rows = options.chunked(perRow)
 
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -79,7 +79,7 @@ fun <T> PixelPillGroup(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .then(if (bounded) Modifier.heightIn(min = viewportHeight) else Modifier),
-            verticalArrangement = Arrangement.spacedBy(PillGap, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(PillGap, Alignment.Top),
         ) {
             rows.forEach { rowOptions ->
                 Row(

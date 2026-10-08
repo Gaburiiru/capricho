@@ -83,4 +83,24 @@ class PredictCaprichoViewModelTest {
         assertEquals("Zapatillas Pro", goals.first().title)
         assertEquals(50000.0, goals.first().targetAmount)
     }
+
+    @Test
+    fun `por defecto viene elegido este mes, fugaz y contado`() = runTest {
+        val vm = PredictCaprichoViewModel(FakeProfileRepository(), InMemoryGoalRepository())
+
+        assertEquals(1, vm.state.value.installments)
+        assertEquals(CaprichoTiming.THIS_MONTH, vm.state.value.timing)
+        assertEquals(Durability.FLEETING, vm.state.value.durability)
+    }
+
+    @Test
+    fun `el monto no acepta ceros a la izquierda`() = runTest {
+        val vm = PredictCaprichoViewModel(FakeProfileRepository(), InMemoryGoalRepository())
+
+        vm.onDigitInput('0')
+        assertEquals("", vm.state.value.rawAmount)
+
+        "1500".forEach { vm.onDigitInput(it) }
+        assertEquals("1500", vm.state.value.rawAmount)
+    }
 }
