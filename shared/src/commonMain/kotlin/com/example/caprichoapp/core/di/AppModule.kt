@@ -19,6 +19,7 @@ import com.example.caprichoapp.feature.goals.GoalsViewModel
 import com.example.caprichoapp.feature.history.HistoryViewModel
 import com.example.caprichoapp.feature.onboarding.OnboardingViewModel
 import com.example.caprichoapp.feature.predict.PredictCaprichoViewModel
+import com.example.caprichoapp.feature.profile.ProfileViewModel
 import com.example.caprichoapp.feature.strategy.StrategyViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
@@ -102,4 +103,5 @@ val appModule = module {
     viewModelOf(::GoalsViewModel)
     viewModelOf(::HistoryViewModel)
     viewModelOf(::StrategyViewModel)
+    viewModelOf(::ProfileViewModel)
 }

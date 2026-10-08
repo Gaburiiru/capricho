@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -92,6 +94,8 @@ fun PixelButton(
     icon: PixelIcon? = null,
     showArrow: Boolean = size == PixelButtonSize.Regular && variant == PixelButtonVariant.Primary && icon == null,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val compact = size == PixelButtonSize.Compact
     val shape = remember { PixelCutShape(3.dp) }
     val palette = buttonPalette(variant, enabled)
@@ -121,7 +125,11 @@ fun PixelButton(
                     interactionSource = interaction,
                     indication = null,
                     role = Role.Button,
-                    onClick = onClick,
+                    onClick = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                        onClick()
+                    },
                 )
                 .padding(horizontal = if (compact) 14.dp else 16.dp, vertical = if (compact) 6.dp else 8.dp),
             contentAlignment = Alignment.Center,
@@ -166,6 +174,8 @@ fun PixelIconButton(
     variant: PixelButtonVariant = PixelButtonVariant.Secondary,
     buttonSize: Dp = 44.dp,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val shape = remember { PixelCutShape(2.dp) }
     val palette = buttonPalette(variant, enabled = true)
 
@@ -176,7 +186,14 @@ fun PixelIconButton(
             .background(palette.background, shape)
             .then(if (palette.border != null) Modifier.border(2.dp, palette.border, shape) else Modifier)
             .semantics { this.contentDescription = contentDescription }
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(
+                role = Role.Button,
+                onClick = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                    onClick()
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         PixelIconImage(icon = icon, tint = palette.content, modifier = Modifier.width(16.dp))
@@ -191,11 +208,21 @@ fun PixelTextButton(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     Box(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(PixelCutShape(2.dp))
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(
+                role = Role.Button,
+                onClick = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                    onClick()
+                },
+            )
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {

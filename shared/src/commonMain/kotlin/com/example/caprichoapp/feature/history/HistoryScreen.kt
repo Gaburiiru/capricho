@@ -81,6 +81,11 @@ fun HistoryScreen(
     var showDetailDialog by remember { mutableStateOf(false) }
     var selectedTimeFilter by remember { mutableStateOf(TimeFilter.MONTH) }
 
+    // Al navegar a la pantalla se refresca siempre el sueldo y los gastos actualizados
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     // Los diálogos se cierran recién cuando el guardado salió bien
     LaunchedEffect(state.savedCount) {
         if (state.savedCount > 0) {

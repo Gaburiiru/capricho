@@ -573,7 +573,7 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 - [ ] `feat(dashboard): filtros semanal/mensual/anual`
 - [x] `feat(history): historial de gastos`
 - [ ] `feat(expenses): categorías y gasto hormiga`
-- [ ] `feat(profile): edición de sueldo y nombre`
+- [x] `feat(profile): edición de sueldo y nombre`
 
 ### Fase 5 · Pulido y entrega
 - [ ] `fix/refactor: auditoría de crashes, estados vacíos y errores de red`

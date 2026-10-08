@@ -120,6 +120,7 @@ fun AppNavHost(
                 composable<ProfileRoute> {
                     ProfileScreen(
                         profile = profile,
+                        onProfileSaved = sessionViewModel::onProfileSaved,
                         onSignOut = sessionViewModel::signOut,
                     )
                 }

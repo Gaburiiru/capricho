@@ -31,6 +31,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.caprichoapp.core.designsystem.CaprichoTheme
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+
 private sealed interface Key {
     data class Digit(val char: Char) : Key
     data object Clear : Key
@@ -54,6 +58,14 @@ fun PixelNumericKeypad(
     modifier: Modifier = Modifier,
     keyHeight: Dp = 60.dp,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        focusManager.clearFocus()
+        keyboardController?.hide()
+    }
+
     val keypadRows = listOf(
         listOf(Key.Digit('1'), Key.Digit('2'), Key.Digit('3')),
         listOf(Key.Digit('4'), Key.Digit('5'), Key.Digit('6')),

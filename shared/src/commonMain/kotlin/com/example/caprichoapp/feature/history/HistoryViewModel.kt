@@ -39,14 +39,26 @@ class HistoryViewModel(
     }
 
     fun loadExpenses() {
+        refresh()
+    }
+
+    /**
+     * Recarga los datos del perfil (sueldo) y la lista de gastos.
+     * Si ya existen datos en pantalla, se refresca en segundo plano sin mostrar el spinner a pantalla completa.
+     */
+    fun refresh() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            val isFirstLoad = _state.value.expenses.isEmpty() && _state.value.monthlySalary == 0.0
+            if (isFirstLoad) {
+                _state.update { it.copy(isLoading = true, error = null) }
+            }
 
             val profileResult = profileRepository.fetchProfile()
             val expensesResult = expenseRepository.getExpenses()
             val profile = profileResult.getOrNull()
-            val expenses = expensesResult.getOrElse { emptyList() }
+            val expenses = expensesResult.getOrElse { _state.value.expenses }
                 .sortedWith(compareByDescending<Expense> { it.spentAt }.thenByDescending { it.id })
+
             val error = expensesResult.exceptionOrNull()?.message
                 ?: profileResult.exceptionOrNull()?.message
                 ?: if (expenses.isEmpty() && profile == null) {
@@ -59,7 +71,7 @@ class HistoryViewModel(
                 it.copy(
                     isLoading = false,
                     expenses = expenses,
-                    monthlySalary = profile?.monthlySalary ?: 0.0,
+                    monthlySalary = profile?.monthlySalary ?: it.monthlySalary,
                     error = error,
                 )
             }

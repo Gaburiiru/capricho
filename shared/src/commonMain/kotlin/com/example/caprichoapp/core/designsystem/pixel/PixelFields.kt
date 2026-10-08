@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -113,12 +116,21 @@ fun PixelAmountField(
     keyHeight: Dp = 48.dp,
     maxDigits: Int = MAX_AMOUNT_DIGITS,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(3.dp) }
     var expanded by remember { mutableStateOf(initiallyExpanded) }
     val text = "$ ${value.formatAmount()}"
     // Se achica el texto, no la caja: el campo mantiene siempre el mismo alto
     val fontSize = (230 / text.length.coerceAtLeast(1)).coerceIn(16, 26)
+
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
 
     Column(
         modifier = modifier.animateContentSize(),
@@ -133,6 +145,8 @@ fun PixelAmountField(
                 .background(colors.surfaceContainerHighest, shape)
                 .border(2.dp, if (expanded) colors.primary else colors.outline, shape)
                 .clickable(role = Role.Button, onClickLabel = if (expanded) "Cerrar teclado" else "Editar monto") {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
                     expanded = !expanded
                 }
                 .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -193,6 +207,8 @@ fun PixelChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(2.dp) }
 
@@ -202,7 +218,15 @@ fun PixelChip(
             .clip(shape)
             .background(if (selected) colors.primary else colors.surfaceContainerHighest, shape)
             .border(2.dp, if (selected) colors.primary else colors.outline, shape)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                    onClick()
+                },
+            )
             .padding(horizontal = 14.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
