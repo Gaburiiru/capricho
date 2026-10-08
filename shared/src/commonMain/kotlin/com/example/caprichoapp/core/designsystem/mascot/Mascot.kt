@@ -38,19 +38,20 @@ private const val REACTION_MS = 1_400L
 fun Mascot(
     mood: MascotMood,
     modifier: Modifier = Modifier,
+    enabled: Boolean = mood != MascotMood.Sleeping,
 ) {
-    // Reacción al toque: cada toque reinicia el temporizador
+    // Reacción al toque: sólo si la mascota está despierta
     var reactions by remember { mutableIntStateOf(0) }
     var reacting by remember { mutableStateOf(false) }
     LaunchedEffect(reactions) {
-        if (reactions > 0) {
+        if (reactions > 0 && enabled) {
             reacting = true
             delay(REACTION_MS.milliseconds)
             reacting = false
         }
     }
 
-    val shownMood = if (reacting) MascotMood.Happy else mood
+    val shownMood = if (reacting && enabled) MascotMood.Happy else mood
     val frames = remember(shownMood) { MascotSprites.framesFor(shownMood) }
     var frameIndex by remember(shownMood) { mutableIntStateOf(0) }
 
@@ -74,10 +75,11 @@ fun Mascot(
         )
     }
 
-    // Rebote suave constante
+    // Rebote suave constante (detenido al dormir)
+    val bounceTarget = if (enabled) -6f else 0f
     val bounce by rememberInfiniteTransition(label = "bounce").animateFloat(
         initialValue = 0f,
-        targetValue = -6f,
+        targetValue = bounceTarget,
         animationSpec = infiniteRepeatable(tween(900, easing = EaseInOut), RepeatMode.Reverse),
         label = "bounceY",
     )
@@ -91,15 +93,19 @@ fun Mascot(
         palette = palette,
         modifier = modifier
             .offset { IntOffset(0, (bounce + jump.value).dp.roundToPx()) }
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) {
-                reactions++
-                scope.launch {
-                    jump.animateTo(-24f, tween(120))
-                    jump.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
-                }
-            },
+            .then(
+                if (enabled) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        reactions++
+                        scope.launch {
+                            jump.animateTo(-24f, tween(120))
+                            jump.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                        }
+                    }
+                } else Modifier
+            ),
     )
 }

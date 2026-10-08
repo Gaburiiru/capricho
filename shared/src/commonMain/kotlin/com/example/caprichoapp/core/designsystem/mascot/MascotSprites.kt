@@ -162,6 +162,32 @@ object MascotSprites {
         "..BBBBBBBB..",
     )
 
+    // Durmiendo: Ojos cerrados como líneas horizontales finas (- -) y ZZZ flotando arriba
+    private val sleeping1 = listOf(
+        "......H.....",
+        ".....H......",
+        "BBBBBBBBBBBB",
+        "BBBBBBBBBBBB",
+        "BBKKBBBBKKBB",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBBBKKBBBBB",
+        ".BBBBBBBBBB.",
+        "..BBBBBBBB..",
+    )
+    private val sleeping2 = listOf(
+        ".....H......",
+        "....H.......",
+        "BBBBBBBBBBBB",
+        "BBBBBBBBBBBB",
+        "BBKKBBBBKKBB",
+        "BPPBBNNBBPPB",
+        "BBBBBNNBBBBB",
+        "BBBBBKKBBBBB",
+        ".BBBBBBBBBB.",
+        "..BBBBBBBB..",
+    )
+
     fun framesFor(mood: MascotMood): List<SpriteFrame> = when (mood) {
         MascotMood.Idle -> listOf(
             SpriteFrame(idleOpen, 2_000),
@@ -205,6 +231,10 @@ object MascotSprites {
         MascotMood.Celebrating -> listOf(
             SpriteFrame(celebrate1, 220),
             SpriteFrame(celebrate2, 220),
+        )
+        MascotMood.Sleeping -> listOf(
+            SpriteFrame(sleeping1, 900),
+            SpriteFrame(sleeping2, 900),
         )
     }
 }

@@ -193,100 +193,101 @@ private fun GreetingHeader(name: String?) {
     }
 }
 
-/** El "bicho virtual": pantalla de TV retro con botones de cambio de canal y animaciones de la mascota. */
+/** El "bicho virtual": pantalla de TV retro con botones físicos en la consola. */
 @Composable
 private fun CaprichoDevice() {
+    var isPoweredOn by rememberSaveable { mutableStateOf(true) }
     var channelIndex by rememberSaveable { mutableIntStateOf(0) }
     var typing by remember { mutableStateOf(true) }
     var messageIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val currentChannel = TV_CHANNELS[channelIndex]
-    val channelNumberText = "${channelIndex + 1}/${TV_CHANNELS.size}"
+    val channelNumberText = if (isPoweredOn) "${channelIndex + 1}/${TV_CHANNELS.size}" else "OFF"
 
     // Cuando cambia de canal, reinicia la animación de escritura
-    LaunchedEffect(channelIndex) {
-        messageIndex = 0
-        typing = true
+    LaunchedEffect(channelIndex, isPoweredOn) {
+        if (isPoweredOn) {
+            messageIndex = 0
+            typing = true
+        }
     }
 
-    // Rotación de mensajes si el canal actual los tiene
+    // Rotación de mensajes si la TV está encendida y el canal actual los tiene
     val messages = currentChannel.messages
-    LaunchedEffect(channelIndex, messageIndex, typing) {
-        if (messages != null && !typing) {
+    LaunchedEffect(channelIndex, messageIndex, typing, isPoweredOn) {
+        if (isPoweredOn && messages != null && !typing) {
             delay(HOLD_BETWEEN_MESSAGES_MS)
             messageIndex = (messageIndex + 1) % messages.size
             typing = true
         }
     }
 
-    val moodToDisplay = if (currentChannel.mood == MascotMood.Idle && typing) {
-        MascotMood.Talking
-    } else {
-        currentChannel.mood
+    val moodToDisplay = when {
+        !isPoweredOn -> MascotMood.Sleeping
+        currentChannel.mood == MascotMood.Idle && typing -> MascotMood.Talking
+        else -> currentChannel.mood
     }
 
-    TamagotchiCard(Modifier.fillMaxWidth()) { device ->
+    TamagotchiCard(
+        modifier = Modifier.fillMaxWidth(),
+        isPoweredOn = isPoweredOn,
+        onPowerToggle = { isPoweredOn = !isPoweredOn },
+        onPrevChannel = {
+            channelIndex = (channelIndex - 1 + TV_CHANNELS.size) % TV_CHANNELS.size
+        },
+        onNextChannel = {
+            channelIndex = (channelIndex + 1) % TV_CHANNELS.size
+        },
+    ) { device ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(230.dp)
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             LcdStatusRow(device = device, channelText = channelNumberText)
 
-            Spacer(Modifier.height(8.dp))
+            // Mascota centrada en la pantalla LCD
+            Mascot(
+                mood = moodToDisplay,
+                enabled = isPoweredOn,
+                modifier = Modifier.size(116.dp),
+            )
 
-            // Fila central: Flecha Izquierda | Mascota | Flecha Derecha
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+            // Área inferior de texto o etiqueta de emoción
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                PixelIconButton(
-                    icon = PixelIcon.ArrowLeft,
-                    contentDescription = "Anterior",
-                    onClick = {
-                        channelIndex = (channelIndex - 1 + TV_CHANNELS.size) % TV_CHANNELS.size
-                    },
-                    buttonSize = 36.dp,
-                )
-
-                Mascot(
-                    mood = moodToDisplay,
-                    modifier = Modifier.size(116.dp),
-                )
-
-                PixelIconButton(
-                    icon = PixelIcon.ArrowRight,
-                    contentDescription = "Siguiente",
-                    onClick = {
-                        channelIndex = (channelIndex + 1) % TV_CHANNELS.size
-                    },
-                    buttonSize = 36.dp,
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            if (messages != null && messages.isNotEmpty()) {
-                PixelTypewriterText(
-                    text = messages[messageIndex % messages.size],
-                    style = CaprichoTheme.pixelText.lcd,
-                    color = device.lcdInk,
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                    onTypingChanged = { typing = it },
-                )
-            } else {
-                Text(
-                    text = currentChannel.title,
-                    style = CaprichoTheme.pixelText.tag,
-                    color = device.lcdInk,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                )
+                if (!isPoweredOn) {
+                    Text(
+                        text = "Capi durmiendo...",
+                        style = CaprichoTheme.pixelText.tag,
+                        color = device.lcdInk,
+                        textAlign = TextAlign.Center,
+                    )
+                } else if (messages != null && messages.isNotEmpty()) {
+                    PixelTypewriterText(
+                        text = messages[messageIndex % messages.size],
+                        style = CaprichoTheme.pixelText.lcd,
+                        color = device.lcdInk,
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth(),
+                        onTypingChanged = { typing = it },
+                    )
+                } else {
+                    Text(
+                        text = currentChannel.title,
+                        style = CaprichoTheme.pixelText.tag,
+                        color = device.lcdInk,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
