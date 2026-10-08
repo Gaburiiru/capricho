@@ -6,6 +6,7 @@ import kotlin.test.assertFailsWith
 import com.example.caprichoapp.domain.model.Durability
 import com.example.caprichoapp.domain.model.Goal
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ImpactCalculatorTest {
     private fun goal(target: Double, saved: Double) = Goal(
@@ -92,6 +93,34 @@ class ImpactCalculatorTest {
     fun `monto cero sobre una meta da impacto cero`() {
         val result = ImpactCalculator.goalImpact(0.0, goal(target = 1000.0, saved = 0.0))
         assertEquals(0.0, result)
+    }
+
+    // ---- goalGapNow / goalGapAfter ----
+
+    @Test
+    fun `sin ahorro te falta el 100 por ciento de la meta`() {
+        assertEquals(1.0, ImpactCalculator.goalGapNow(goal(target = 2_000.0, saved = 0.0)), absoluteTolerance = 0.0001)
+    }
+
+    @Test
+    fun `con gasto de 1000 sobre una meta de 2000 sin ahorro te faltaria el 150 por ciento`() {
+        val result = ImpactCalculator.goalGapAfter(1_000.0, goal(target = 2_000.0, saved = 0.0))
+        assertEquals(1.5, result, absoluteTolerance = 0.0001)
+    }
+
+    @Test
+    fun `al ahorrar mas, lo que te faltaria con el gasto baja`() {
+        val sinAhorro = ImpactCalculator.goalGapAfter(1_000.0, goal(target = 2_000.0, saved = 0.0))
+        val conAhorro = ImpactCalculator.goalGapAfter(1_000.0, goal(target = 2_000.0, saved = 1_000.0))
+        assertEquals(1.0, conAhorro, absoluteTolerance = 0.0001)
+        assertTrue(conAhorro < sinAhorro)
+    }
+
+    @Test
+    fun `meta cumplida no tiene distancia ni antes ni despues`() {
+        val done = goal(target = 1_000.0, saved = 1_000.0)
+        assertEquals(0.0, ImpactCalculator.goalGapNow(done))
+        assertEquals(0.0, ImpactCalculator.goalGapAfter(500.0, done))
     }
 
     // ---- delayInMonths ----

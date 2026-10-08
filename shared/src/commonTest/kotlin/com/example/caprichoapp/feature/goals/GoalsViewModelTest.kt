@@ -75,4 +75,55 @@ class GoalsViewModelTest {
         val finalState = vm.uiState.value as GoalsUiState.Success
         assertEquals(0, finalState.goals.size)
     }
+
+    @Test
+    fun testEditGoalCapsTargetAtSavedAmount() = runTest {
+        val repo = InMemoryGoalRepository()
+        val strategyRepo = object : StrategyRepository {
+            override suspend fun getSavingsStrategy(goalId: String): Result<StrategyResponse> =
+                Result.failure(NotImplementedError())
+
+            override suspend fun hasStoredExpenses(): Result<Boolean> = Result.success(true)
+        }
+        val vm = GoalsViewModel(repo, strategyRepo)
+
+        vm.addGoal("Moto", 2_000_000.0, 6, Durability.HIGH)
+        val created = (vm.uiState.value as GoalsUiState.Success).goals.first()
+        vm.addSavings(created, 1_000_000.0)
+        val withSavings = (vm.uiState.value as GoalsUiState.Success).goals.first()
+
+        // Intenta bajar el objetivo a 900.000, pero ya hay 1.000.000 ahorrado
+        vm.updateGoal(withSavings, "Moto", 900_000.0, 6, Durability.HIGH)
+
+        val edited = (vm.uiState.value as GoalsUiState.Success).goals.first()
+        assertEquals(1_000_000.0, edited.targetAmount)
+        assertEquals(GoalStatus.ACHIEVED, edited.status)
+        assertEquals(1, (vm.uiState.value as GoalsUiState.Success).achieved.size)
+        assertEquals(0, (vm.uiState.value as GoalsUiState.Success).inProgress.size)
+    }
+
+    @Test
+    fun testAchievedGoalCannotBeEdited() = runTest {
+        val repo = InMemoryGoalRepository()
+        val strategyRepo = object : StrategyRepository {
+            override suspend fun getSavingsStrategy(goalId: String): Result<StrategyResponse> =
+                Result.failure(NotImplementedError())
+
+            override suspend fun hasStoredExpenses(): Result<Boolean> = Result.success(true)
+        }
+        val vm = GoalsViewModel(repo, strategyRepo)
+
+        vm.addGoal("Moto", 100_000.0, 6, Durability.HIGH)
+        val created = (vm.uiState.value as GoalsUiState.Success).goals.first()
+        vm.addSavings(created, 100_000.0)
+        val achieved = (vm.uiState.value as GoalsUiState.Success).goals.first()
+
+        vm.onEditGoalClick(achieved)
+        assertEquals(null, vm.goalToEdit.value)
+
+        vm.updateGoal(achieved, "Otra", 500_000.0, 1, Durability.FLEETING)
+        val after = (vm.uiState.value as GoalsUiState.Success).goals.first()
+        assertEquals("Moto", after.title)
+        assertEquals(100_000.0, after.targetAmount)
+    }
 }

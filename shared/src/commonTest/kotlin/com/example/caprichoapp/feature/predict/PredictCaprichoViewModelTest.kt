@@ -2,6 +2,7 @@ package com.example.caprichoapp.feature.predict
 
 import com.example.caprichoapp.data.repository.InMemoryGoalRepository
 import com.example.caprichoapp.domain.model.Durability
+import com.example.caprichoapp.domain.model.Goal
 import com.example.caprichoapp.domain.model.Profile
 import com.example.caprichoapp.testutil.FakeProfileRepository
 import kotlinx.coroutines.Dispatchers
@@ -102,5 +103,21 @@ class PredictCaprichoViewModelTest {
 
         "1500".forEach { vm.onDigitInput(it) }
         assertEquals("1500", vm.state.value.rawAmount)
+    }
+
+    @Test
+    fun `el diagnostico trae todas las metas ordenadas de la mas afectada a la menos`() = runTest {
+        val goals = InMemoryGoalRepository()
+        // Con un capricho de 100.000: moto 10% del total, auto 2%, bici 25%
+        goals.addGoal(Goal(id = "auto", title = "Auto", targetAmount = 5_000_000.0, durability = Durability.HIGH))
+        goals.addGoal(Goal(id = "bici", title = "Bici", targetAmount = 400_000.0, durability = Durability.HIGH))
+        goals.addGoal(Goal(id = "moto", title = "Moto", targetAmount = 1_000_000.0, durability = Durability.HIGH))
+        val vm = PredictCaprichoViewModel(FakeProfileRepository(), goals)
+
+        "100000".forEach { vm.onDigitInput(it) }
+        repeat(4) { vm.onNextStep() }
+
+        val ids = vm.state.value.diagnosis!!.goalImpacts.map { it.goalId }
+        assertEquals(listOf("bici", "moto", "auto"), ids)
     }
 }

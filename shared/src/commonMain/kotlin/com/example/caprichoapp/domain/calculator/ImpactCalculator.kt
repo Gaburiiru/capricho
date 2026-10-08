@@ -23,6 +23,25 @@ object ImpactCalculator {
         return amount / remaining
     }
 
+    /**
+     * Fracción de la meta que TE FALTA hoy (0.77 = te falta el 77% del valor de la meta).
+     * Baja a medida que ahorrás.
+     */
+    fun goalGapNow(goal: Goal): Double {
+        if (goal.targetAmount <= 0.0) return 0.0
+        return goal.remaining / goal.targetAmount
+    }
+
+    /**
+     * Fracción de la meta que te FALTARÍA si hacés el gasto: lo que falta hoy más el monto
+     * (el gasto es plata que no va a la meta). Puede superar 1.0. Si la meta ya está cumplida, 0.
+     * Baja a medida que ahorrás, porque parte de una distancia menor.
+     */
+    fun goalGapAfter(amount: Double, goal: Goal): Double {
+        if (goal.targetAmount <= 0.0 || goal.remaining <= 0.0) return 0.0
+        return (goal.remaining + amount) / goal.targetAmount
+    }
+
     /** Meses extra que te aleja de la meta. Null si no hay capacidad de ahorro. */
     fun delayInMonths(amount: Double, monthlySavingCapacity: Double): Double? {
         if (monthlySavingCapacity <= 0.0) return null

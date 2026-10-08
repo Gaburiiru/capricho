@@ -29,6 +29,9 @@ class GoalsViewModel(
     private val _goalToDelete = MutableStateFlow<Goal?>(null)
     val goalToDelete: StateFlow<Goal?> = _goalToDelete.asStateFlow()
 
+    private val _goalToEdit = MutableStateFlow<Goal?>(null)
+    val goalToEdit: StateFlow<Goal?> = _goalToEdit.asStateFlow()
+
     private val _canGenerateStrategy = MutableStateFlow(false)
     val canGenerateStrategy: StateFlow<Boolean> = _canGenerateStrategy.asStateFlow()
 
@@ -75,6 +78,40 @@ class GoalsViewModel(
 
     fun onCancelDeleteGoal() {
         _goalToDelete.value = null
+    }
+
+    fun onEditGoalClick(goal: Goal) {
+        if (goal.isAchieved) return
+        _goalToEdit.value = goal
+    }
+
+    fun onDismissEditDialog() {
+        _goalToEdit.value = null
+    }
+
+    /**
+     * Guarda los cambios de una meta. El monto objetivo no puede quedar por debajo de lo ya
+     * ahorrado (ver [Goal.withEdits]); la pantalla avisa antes, pero acá también se garantiza.
+     */
+    fun updateGoal(
+        goal: Goal,
+        title: String,
+        targetAmount: Double,
+        installments: Int,
+        durability: Durability,
+    ) {
+        if (goal.isAchieved || title.isBlank() || targetAmount <= 0.0) return
+        viewModelScope.launch {
+            val updatedGoal = goal.withEdits(title, targetAmount, installments, durability)
+            goalRepository.updateGoal(updatedGoal)
+                .onSuccess {
+                    _goalToEdit.value = null
+                    if (_selectedGoalForDetail.value?.id == updatedGoal.id) {
+                        _selectedGoalForDetail.value = updatedGoal
+                    }
+                    loadGoals()
+                }
+        }
     }
 
     fun addGoal(title: String, targetAmount: Double, installments: Int, durability: Durability) {

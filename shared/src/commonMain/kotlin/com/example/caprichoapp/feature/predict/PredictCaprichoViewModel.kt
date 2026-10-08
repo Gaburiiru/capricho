@@ -19,6 +19,9 @@ import kotlinx.coroutines.launch
 /** El monto del capricho llega hasta 99.999.999. */
 private const val MAX_CAPRICHO_DIGITS = 8
 
+/** Fracción -> porcentaje con un decimal (0.774 -> 77.4). */
+private fun Double.toPercentOneDecimal(): Double = (this * 1000).toInt() / 10.0
+
 class PredictCaprichoViewModel(
     private val profileRepository: ProfileRepository,
     private val goalRepository: GoalRepository,
@@ -133,13 +136,15 @@ class PredictCaprichoViewModel(
         val activeGoals = goalRepository.getGoals().getOrDefault(emptyList())
             .filter { !it.isAchieved && it.status == GoalStatus.ACTIVE }
 
-        val goalImpacts = activeGoals.map { goal ->
-            val impactFraction = ImpactCalculator.goalImpact(state.amount, goal)
-            val impactPercentGoal = (impactFraction * 1000).toInt() / 10.0 // Redondeo a 1 decimal
+        // La meta que más te aleja (mayor salto de distancia, en puntos de porcentaje) va primero
+        val goalImpacts = activeGoals.sortedByDescending { goal ->
+            ImpactCalculator.goalGapAfter(state.amount, goal) - ImpactCalculator.goalGapNow(goal)
+        }.map { goal ->
             GoalImpactInfo(
                 goalId = goal.id,
                 goalTitle = goal.title,
-                impactPercent = impactPercentGoal,
+                gapNowPercent = ImpactCalculator.goalGapNow(goal).toPercentOneDecimal(),
+                gapAfterPercent = ImpactCalculator.goalGapAfter(state.amount, goal).toPercentOneDecimal(),
                 goalRemainingAmount = goal.remaining,
             )
         }

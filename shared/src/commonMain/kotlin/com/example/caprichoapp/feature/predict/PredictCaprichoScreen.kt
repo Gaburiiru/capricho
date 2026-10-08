@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -521,10 +523,9 @@ private fun StepResult(
             }
         },
     ) {
+        // Esta pantalla ya no scrollea entera: solo scrollea la lista de metas (abajo)
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.Top),
         ) {
             // La mascota y su mensaje en una sola fila para ahorrar alto
@@ -563,7 +564,7 @@ private fun StepResult(
             }
 
             if (diagnosis.goalImpacts.isNotEmpty()) {
-                GoalImpactSection(diagnosis.goalImpacts)
+                GoalImpactSection(diagnosis.goalImpacts, Modifier.weight(1f))
             }
         }
     }
@@ -608,41 +609,32 @@ private fun ResultHero(
 }
 
 @Composable
-private fun GoalImpactSection(impacts: List<GoalImpactInfo>) {
+private fun GoalImpactSection(impacts: List<GoalImpactInfo>, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
-    val visible = impacts.take(MAX_VISIBLE_GOALS)
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // El título queda fijo y solo la lista scrollea, ordenada de la meta más afectada a la menos
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = "ASÍ AFECTA A TUS METAS",
             style = CaprichoTheme.pixelText.tag.copy(fontSize = 11.sp),
             color = colors.primary,
         )
-        visible.forEach { GoalImpactRow(it) }
-        if (impacts.size > visible.size) {
-            Text(
-                text = "y ${impacts.size - visible.size} más en la sección Metas",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-            )
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(impacts) { GoalImpactRow(it) }
         }
     }
 }
 
-private const val MAX_VISIBLE_GOALS = 2
-
-/** Una meta, en dos líneas: su nombre y cuánto representa el capricho de lo que falta. */
+/** Una meta: su nombre y, debajo, cuánto te falta hoy vs. cuánto te faltaría con el capricho. */
 @Composable
 private fun GoalImpactRow(impact: GoalImpactInfo) {
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(3.dp) }
-    val heavy = impact.impactPercent >= 100.0
-
-    val sentence = if (impact.impactPercent >= 200.0) {
-        "Equivale a ${(impact.impactPercent / 100.0).formatPercent()} veces lo que te falta"
-    } else {
-        "Equivale al ${impact.impactPercent.formatPercent()}% de lo que te falta"
-    }
+    // Si después del gasto te falta el 100% o más, perdés todo lo que ya avanzaste.
+    val heavy = impact.gapAfterPercent >= 100.0
 
     Row(
         modifier = Modifier
@@ -665,12 +657,38 @@ private fun GoalImpactRow(impact: GoalImpactInfo) {
                 color = colors.onSurface,
                 maxLines = 1,
             )
-            Text(
-                text = sentence,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
+            Spacer(Modifier.height(4.dp))
+            GapLine(
+                label = "Hoy te falta",
+                value = "${impact.gapNowPercent.formatPercent()}%",
+                valueColor = colors.onSurface,
+            )
+            GapLine(
+                label = "Con este capricho",
+                value = "${impact.gapAfterPercent.formatPercent()}%",
+                valueColor = if (heavy) CaprichoTheme.impact.warning else colors.onSurface,
             )
         }
+    }
+}
+
+/** Una línea "etiqueta ........ valor", para comparar el hoy con el después. */
+@Composable
+private fun GapLine(label: String, value: String, valueColor: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = valueColor,
+        )
     }
 }
 

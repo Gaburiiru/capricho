@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,10 +26,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,6 +50,7 @@ import com.example.caprichoapp.core.designsystem.pixel.PixelConfirmDialog
 import com.example.caprichoapp.core.designsystem.pixel.PixelCutShape
 import com.example.caprichoapp.core.designsystem.pixel.PixelDialog
 import com.example.caprichoapp.core.designsystem.pixel.PixelIcon
+import com.example.caprichoapp.core.designsystem.pixel.PixelIconImage
 import com.example.caprichoapp.core.designsystem.pixel.PixelIconButton
 import com.example.caprichoapp.core.designsystem.pixel.PixelProgressBar
 import com.example.caprichoapp.core.designsystem.pixel.PixelTag
@@ -77,6 +81,8 @@ fun GoalsScreen(
     val showAddDialog by viewModel.showAddDialog.collectAsStateWithLifecycle()
     val selectedGoal by viewModel.selectedGoalForDetail.collectAsStateWithLifecycle()
     val goalToDelete by viewModel.goalToDelete.collectAsStateWithLifecycle()
+    val goalToEdit by viewModel.goalToEdit.collectAsStateWithLifecycle()
+    var achievedExpanded by rememberSaveable { mutableStateOf(false) }
     val canGenerateStrategy by viewModel.canGenerateStrategy.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -153,16 +159,40 @@ fun GoalsScreen(
                 if (state.goals.isEmpty()) {
                     EmptyGoalsContent(onAddClick = viewModel::onAddGoalClick)
                 } else {
+                    // Con metas en curso, las cumplidas quedan plegadas para dar lugar a lo pendiente;
+                    // si no hay ninguna en curso se muestran siempre.
+                    val showAchieved = achievedExpanded || state.inProgress.isEmpty()
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(state.goals, key = { it.id }) { goal ->
+                        items(state.inProgress, key = { it.id }) { goal ->
                             GoalCard(
                                 goal = goal,
                                 onClick = { viewModel.onGoalClick(goal) },
+                                onEditClick = { viewModel.onEditGoalClick(goal) },
                                 onDeleteClick = { viewModel.onRequestDeleteGoal(goal) },
                             )
+                        }
+                        if (state.achieved.isNotEmpty()) {
+                            item(key = "achieved-header") {
+                                AchievedSectionHeader(
+                                    count = state.achieved.size,
+                                    expanded = showAchieved,
+                                    canToggle = state.inProgress.isNotEmpty(),
+                                    onToggle = { achievedExpanded = !achievedExpanded },
+                                )
+                            }
+                            if (showAchieved) {
+                                items(state.achieved, key = { it.id }) { goal ->
+                                    GoalCard(
+                                        goal = goal,
+                                        onClick = { viewModel.onGoalClick(goal) },
+                                        onEditClick = null,
+                                        onDeleteClick = { viewModel.onRequestDeleteGoal(goal) },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -187,6 +217,16 @@ fun GoalsScreen(
             onDelete = { viewModel.onRequestDeleteGoal(goal) },
             onOpenStrategy = onOpenStrategy,
             canGenerateStrategy = canGenerateStrategy,
+        )
+    }
+
+    goalToEdit?.let { goal ->
+        EditGoalDialog(
+            goal = goal,
+            onDismiss = viewModel::onDismissEditDialog,
+            onConfirm = { title, amount, installments, durability ->
+                viewModel.updateGoal(goal, title, amount, installments, durability)
+            },
         )
     }
 
@@ -240,11 +280,46 @@ private fun EmptyGoalsContent(onAddClick: () -> Unit) {
     }
 }
 
-/** Tarjeta de una meta: nombre, etiquetas, progreso y cuánto falta. Tocarla abre el detalle. */
+/** Línea divisoria con el título de la sección de metas cumplidas; tocarla la despliega o la pliega. */
+@Composable
+private fun AchievedSectionHeader(
+    count: Int,
+    expanded: Boolean,
+    canToggle: Boolean,
+    onToggle: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = canToggle, onClick = onToggle)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.weight(1f).height(2.dp).background(colors.outlineVariant))
+        Text(
+            text = "CUMPLIDAS ($count)",
+            style = CaprichoTheme.pixelText.tag.copy(fontSize = 11.sp),
+            color = CaprichoTheme.impact.good,
+        )
+        if (canToggle) {
+            PixelIconImage(
+                icon = PixelIcon.ArrowRight,
+                tint = CaprichoTheme.impact.good,
+                modifier = Modifier.width(8.dp).rotate(if (expanded) 90f else 0f),
+            )
+        }
+        Box(Modifier.weight(1f).height(2.dp).background(colors.outlineVariant))
+    }
+}
+
+/** Tarjeta de una meta: nombre, etiquetas, progreso y cuánto falta. Tocarla abre el detalle. [onEditClick] es null en las cumplidas. */
 @Composable
 private fun GoalCard(
     goal: Goal,
     onClick: () -> Unit,
+    onEditClick: (() -> Unit)?,
     onDeleteClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -281,12 +356,22 @@ private fun GoalCard(
                     PixelTag("Dura: ${goal.durability.shortLabel()}", color = colors.secondary)
                 }
             }
-            PixelIconButton(
-                icon = PixelIcon.Trash,
-                contentDescription = "Eliminar meta",
-                onClick = onDeleteClick,
-                variant = PixelButtonVariant.Danger,
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Una meta cumplida ya no se edita: solo se puede eliminar
+                if (onEditClick != null) {
+                    PixelIconButton(
+                        icon = PixelIcon.Edit,
+                        contentDescription = "Editar meta",
+                        onClick = onEditClick,
+                    )
+                }
+                PixelIconButton(
+                    icon = PixelIcon.Trash,
+                    contentDescription = "Eliminar meta",
+                    onClick = onDeleteClick,
+                    variant = PixelButtonVariant.Danger,
+                )
+            }
         }
 
         PixelProgressBar(
@@ -457,15 +542,17 @@ private fun GoalDetailDialog(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        // Una meta cumplida ya no necesita estrategia de ahorro
+        val strategyEnabled = canGenerateStrategy && !goal.isAchieved
         PixelButton(
             text = "Estrategia de ahorro",
-            onClick = { if (canGenerateStrategy) onOpenStrategy(goal.id) },
-            enabled = canGenerateStrategy,
+            onClick = { if (strategyEnabled) onOpenStrategy(goal.id) },
+            enabled = strategyEnabled,
             variant = PixelButtonVariant.Secondary,
             showArrow = false,
             modifier = Modifier.fillMaxWidth(),
         )
-        if (!canGenerateStrategy) {
+        if (!goal.isAchieved && !canGenerateStrategy) {
             Text(
                 text = "Cargá al menos un gasto en la sección Gastos para activar la estrategia.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -474,6 +561,100 @@ private fun GoalDetailDialog(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
+}
+
+private val InstallmentOptions = listOf(1, 3, 6, 12, 18, 24)
+
+/**
+ * Edición de una meta: nombre, monto total, cuotas y durabilidad.
+ * El monto no puede bajar de lo ya ahorrado: si se intenta, se avisa y al guardar se ajusta a ese mínimo.
+ */
+@Composable
+private fun EditGoalDialog(
+    goal: Goal,
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, targetAmount: Double, installments: Int, durability: Durability) -> Unit,
+) {
+    var title by remember { mutableStateOf(goal.title) }
+    var amountText by remember { mutableStateOf(goal.targetAmount.toLong().toString()) }
+    var installments by remember { mutableStateOf(goal.installments) }
+    var durability by remember { mutableStateOf(goal.durability) }
+    var adjusted by remember { mutableStateOf(false) }
+
+    val colors = MaterialTheme.colorScheme
+    val minAmount = goal.minTargetAmount.toLong()
+    val amount = amountText.toLongOrNull() ?: 0L
+    val belowMin = minAmount > 0 && amount < minAmount
+    val isValid = title.isNotBlank() && (amount > 0 || belowMin)
+    // Si la meta ya tenía unas cuotas fuera de las opciones habituales (ej. 9), se mantienen visibles
+    val installmentOptions = remember(goal.installments) { (InstallmentOptions + goal.installments).distinct().sorted() }
+
+    PixelDialog(
+        onDismiss = onDismiss,
+        onClose = onDismiss,
+        title = "Editar meta",
+        actions = {
+            PixelButton(
+                text = "Guardar cambios",
+                onClick = {
+                    if (belowMin) {
+                        // Primero se muestra el ajuste; el usuario confirma con el siguiente toque
+                        amountText = minAmount.toString()
+                        adjusted = true
+                    } else {
+                        onConfirm(title, amount.toDouble(), installments, durability)
+                    }
+                },
+                enabled = isValid,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(4.dp))
+            PixelTextButton(text = "Cancelar", onClick = onDismiss)
+        },
+    ) {
+        PixelTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = "Nombre de la meta",
+            placeholder = "Ej: Zapatillas, Viaje...",
+            maxLength = 30,
+        )
+        PixelAmountField(
+            value = amountText,
+            onValueChange = {
+                amountText = it
+                adjusted = false
+            },
+            label = "Monto total",
+        )
+        if (adjusted) {
+            Text(
+                text = "Ya ahorraste $${minAmount.formatThousands()}, así que el monto se quedó en ese mínimo.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.primary,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else if (belowMin) {
+            Text(
+                text = "Ya ahorraste $${minAmount.formatThousands()}: el monto no puede ser menor. Si guardás, se queda en $${minAmount.formatThousands()}.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.error,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        PixelChipGroup(
+            label = "¿Cómo lo pagarías?",
+            options = installmentOptions.map { it to installmentsLabel(it) },
+            selected = installments,
+            onSelected = { installments = it },
+        )
+        PixelChipGroup(
+            label = "¿Cuánto te va a durar?",
+            options = Durability.entries.map { it to it.shortLabel() },
+            selected = durability,
+            onSelected = { durability = it },
+        )
     }
 }
 

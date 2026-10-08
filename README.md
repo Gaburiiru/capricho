@@ -153,8 +153,9 @@ Todo el cálculo vive en **funciones puras en `commonMain`** (sin dependencias d
 **2. Impacto sobre una meta**
 
 ```
-% de la meta   = monto / (meta.target - meta.saved)
-atraso (meses) = monto / capacidadDeAhorroMensual
+te falta hoy     = (meta.target - meta.saved) / meta.target
+te faltaría      = (meta.target - meta.saved + monto) / meta.target   (puede superar 100%)
+atraso (meses)   = monto / capacidadDeAhorroMensual
 ```
 
 `capacidadDeAhorroMensual` se estima como `sueldo − gastos mensuales declarados` (si es ≤ 0, se informa sin calcular atraso).

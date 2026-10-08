@@ -17,7 +17,10 @@ enum class RecommendationVerdict {
 data class GoalImpactInfo(
     val goalId: String,
     val goalTitle: String,
-    val impactPercent: Double,
+    /** Cuánto de la meta te falta hoy (0-100). */
+    val gapNowPercent: Double,
+    /** Cuánto de la meta te faltaría si hacés el gasto (puede superar 100). */
+    val gapAfterPercent: Double,
     val goalRemainingAmount: Double,
 )
 
