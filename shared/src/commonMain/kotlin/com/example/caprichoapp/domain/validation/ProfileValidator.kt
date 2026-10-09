@@ -10,6 +10,9 @@ object ProfileValidator {
     const val MAX_NICKNAME_LENGTH = 24
     const val MAX_SALARY = 1_000_000_000.0
 
+    /** Por debajo de este monto se pide confirmar el sueldo (probable error de tipeo). */
+    const val LOW_SALARY_THRESHOLD = 10_000.0
+
     fun validateName(name: String): TextError? {
         val trimmed = name.trim()
         return when {
@@ -31,5 +34,14 @@ object ProfileValidator {
             value > MAX_SALARY -> SalaryError.TOO_LARGE
             else -> null
         }
+    }
+
+    /**
+     * Sueldo válido pero sospechosamente bajo (de 0 a [LOW_SALARY_THRESHOLD], sin incluirlo):
+     * no se bloquea, solo se pide confirmación. Devuelve el monto o null si no hace falta.
+     */
+    fun lowSalaryToConfirm(raw: String): Double? {
+        if (validateSalary(raw) != null) return null
+        return raw.trim().toDouble().takeIf { it < LOW_SALARY_THRESHOLD }
     }
 }

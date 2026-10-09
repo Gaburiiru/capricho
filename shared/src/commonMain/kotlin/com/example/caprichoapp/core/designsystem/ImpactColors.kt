@@ -19,7 +19,7 @@ val DarkImpactColors = ImpactColors(
 
 val LightImpactColors = ImpactColors(
     good = Color(0xFF0F7A55),
-    warning = Color(0xFF8A5A00),
+    warning = Color(0xFFA35B00), // ámbar más vivo (antes 8A5A00, tirando a marrón); 4,7:1 sobre el fondo
     heavy = Color(0xFFB3261E),
 )
 

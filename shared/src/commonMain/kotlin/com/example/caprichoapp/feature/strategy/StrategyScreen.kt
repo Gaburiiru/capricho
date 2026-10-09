@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.caprichoapp.core.network.ReconnectEffect
 import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
@@ -47,6 +48,9 @@ fun StrategyScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
+
+    // Si falló por falta de internet, al volver se reintenta (sin repetir si ya hay estrategia)
+    ReconnectEffect { if (uiState is StrategyUiState.Error) viewModel.loadStrategy() }
 
     Column(
         modifier = Modifier

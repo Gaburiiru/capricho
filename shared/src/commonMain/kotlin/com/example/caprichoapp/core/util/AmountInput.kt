@@ -29,3 +29,10 @@ fun Double.formatPercent(): String {
     val tenths = (this * 10).toLong()
     return "${(tenths / 10).formatThousands()},${tenths % 10}"
 }
+
+/** Porcentajes que ya no aportan información: se muestran como ">999" en vez de "200.000,0". */
+const val MAX_SHOWN_PERCENT = 999.9
+
+/** Igual que [formatPercent], pero topeado: 200000.0 -> ">999". */
+fun Double.formatPercentCapped(): String =
+    if (this > MAX_SHOWN_PERCENT) ">999" else formatPercent()

@@ -36,6 +36,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.caprichoapp.core.network.ReconnectEffect
 import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
@@ -50,10 +51,12 @@ import com.example.caprichoapp.core.designsystem.pixel.PixelCutShape
 import com.example.caprichoapp.core.designsystem.pixel.PixelDialog
 import com.example.caprichoapp.core.designsystem.pixel.PixelIcon
 import com.example.caprichoapp.core.designsystem.pixel.PixelIconButton
+import com.example.caprichoapp.core.designsystem.pixel.isDarkTheme
 import com.example.caprichoapp.core.designsystem.pixel.PixelTag
 import com.example.caprichoapp.core.designsystem.pixel.PixelTextButton
 import com.example.caprichoapp.core.designsystem.pixel.PixelTextField
 import com.example.caprichoapp.core.designsystem.pixel.TamagotchiCard
+import com.example.caprichoapp.core.util.formatPercentCapped
 import com.example.caprichoapp.core.util.formatThousands
 import com.example.caprichoapp.core.util.today
 import com.example.caprichoapp.domain.model.Category
@@ -85,6 +88,9 @@ fun HistoryScreen(
     LaunchedEffect(Unit) {
         viewModel.refresh()
     }
+
+    // Si falló por falta de internet, al volver se recargan los gastos
+    ReconnectEffect(onReconnected = viewModel::refresh)
 
     // Los diálogos se cierran recién cuando el guardado salió bien
     LaunchedEffect(state.savedCount) {
@@ -260,17 +266,36 @@ fun HistoryScreen(
     }
 }
 
-/** Colores de las categorías del gráfico: distinguibles entre sí y legibles en tema claro y oscuro. */
+/**
+ * Colores de las categorías del gráfico. En oscuro se usan tonos claros (400); en claro, tonos más
+ * profundos (600) porque el amarillo/celeste pastel casi no se distinguía del papel (1,5:1 a 2:1).
+ */
 @Composable
-private fun categoryPalette(): List<Color> = listOf(
-    MaterialTheme.colorScheme.primary,
-    MaterialTheme.colorScheme.secondary,
-    Color(0xFF38BDF8),
-    Color(0xFFFBBF24),
-    Color(0xFFA78BFA),
-    Color(0xFFFB923C),
-    Color(0xFF2DD4BF),
-)
+private fun categoryPalette(): List<Color> = if (isDarkTheme()) {
+    listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        Color(0xFF38BDF8),
+        Color(0xFFFBBF24),
+        Color(0xFFA78BFA),
+        Color(0xFFFB923C),
+        Color(0xFF2DD4BF),
+    )
+} else {
+    listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        Color(0xFF0B7FB8),
+        Color(0xFFD97706),
+        Color(0xFF7C5CE0),
+        Color(0xFFE2631A),
+        Color(0xFF0E9F8E),
+    )
+}
+
+/** Color del "sueldo libre" en los gráficos. */
+@Composable
+private fun freeBalanceColor(): Color = if (isDarkTheme()) Color(0xFF0EA5E9) else Color(0xFF0284C7)
 
 @Composable
 private fun EmptyHistoryState(onAddClick: () -> Unit) {
@@ -300,7 +325,7 @@ private fun EmptyHistoryState(onAddClick: () -> Unit) {
 
         Spacer(Modifier.height(20.dp))
         PixelButton(
-            text = "Agregar primer gasto",
+            text = "Agregar mi primer gasto",
             onClick = onAddClick,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -309,11 +334,9 @@ private fun EmptyHistoryState(onAddClick: () -> Unit) {
 
 private fun Double.formatPercentage(): String {
     if (this <= 0.0) return "0%"
-    val rounded10 = (this * 10 + 0.5).toInt()
-    if (rounded10 == 0) return "<0,1%"
-    val whole = rounded10 / 10
-    val decimal = rounded10 % 10
-    return if (decimal == 0) "$whole%" else "$whole,$decimal%"
+    if (this < 0.05) return "<0,1%"
+    // +0,05 para redondear (formatPercent trunca); puntos de miles y tope en ">999%"
+    return "${(this + 0.05).formatPercentCapped().removeSuffix(",0")}%"
 }
 
 @Composable
@@ -327,7 +350,7 @@ private fun SummaryCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(4.dp) }
-    val freeColor = Color(0xFF0EA5E9)
+    val freeColor = freeBalanceColor()
 
     val hasSalary = monthlySalary > 0.0
     val freeSalary = (monthlySalary - total).coerceAtLeast(0.0)
@@ -504,7 +527,7 @@ private fun ExpenseDetailDialog(
 ) {
     val colors = MaterialTheme.colorScheme
     val emptyChartColor = colors.outlineVariant
-    val freeColor = Color(0xFF0EA5E9)
+    val freeColor = freeBalanceColor()
 
     val hasSalary = monthlySalary > 0.0
     val freeSalary = (monthlySalary - totalSpent).coerceAtLeast(0.0)

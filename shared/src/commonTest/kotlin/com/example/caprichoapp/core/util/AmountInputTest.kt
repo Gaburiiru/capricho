@@ -51,4 +51,16 @@ class AmountInputTest {
         assertEquals("3.472,2", 3472.24.formatPercent())
         assertEquals("0,5", 0.55.formatPercent())
     }
+
+    @Test
+    fun `porcentajes enormes se topean en mas de 999`() {
+        assertEquals(">999", 200_000.0.formatPercentCapped())
+        assertEquals(">999", 1_000.0.formatPercentCapped())
+    }
+
+    @Test
+    fun `porcentajes normales no se topean y llevan puntos de miles`() {
+        assertEquals("999,9", 999.9.formatPercentCapped())
+        assertEquals("14,0", 14.0.formatPercentCapped())
+    }
 }

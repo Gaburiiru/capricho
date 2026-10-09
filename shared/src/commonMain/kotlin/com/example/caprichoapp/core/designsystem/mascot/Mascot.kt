@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -64,11 +65,14 @@ fun Mascot(
 
     val colors = MaterialTheme.colorScheme
     val palette = remember(colors) {
+        // En claro el cuerpo es verde oscuro: los cachetes necesitan un rosa claro para notarse
+        // (B3365A sobre 3A7000 tenía 1,03:1 de contraste) y la nariz un tono claro como los ojos.
+        val light = colors.background.luminance() >= 0.5f
         mapOf(
             'B' to colors.primary,
             'K' to colors.background,
-            'P' to colors.secondary,
-            'N' to colors.onPrimaryContainer,
+            'P' to (if (light) androidx.compose.ui.graphics.Color(0xFFFF9DB5) else colors.secondary),
+            'N' to (if (light) colors.primaryContainer else colors.onPrimaryContainer),
             'H' to colors.secondary,
             'T' to androidx.compose.ui.graphics.Color(0xFF38BDF8), // Lágrimas azules
             'F' to androidx.compose.ui.graphics.Color(0xFFEF4444), // Fuego rojo

@@ -73,7 +73,7 @@ fun tamagotchiColors(): TamagotchiColors {
             shellDark = c.secondary,
             lcdBackground = c.primaryContainer,
             lcdInk = c.onPrimaryContainer,
-            shadow = c.secondary.copy(alpha = 0.35f),
+            shadow = Color(0xFF8C2A4B), // sombra dura opaca: el plástico se ve con volumen (antes: 35 % de opacidad)
         )
     }
 }

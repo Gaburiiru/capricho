@@ -24,4 +24,15 @@ class PixelIconsTest {
             assertTrue(icon.rows.all { it.length == 9 }, "ancho de $icon")
         }
     }
+
+    @Test
+    fun `las flechas de la tele recortadas ocupan todo el ancho de su grilla`() {
+        // Con la columna vacía recortada, la fila más ancha del triángulo toca ambos bordes
+        val left = PixelIcon.ArrowLeft.rows.map { it.drop(1) }
+        val right = PixelIcon.ArrowRight.rows.map { it.dropLast(1) }
+        listOf(left, right).forEach { rows ->
+            assertTrue(rows.all { it.length == 4 })
+            assertTrue(rows.any { row -> row.all { it == 'X' } }, "la fila más ancha debe llenar la grilla")
+        }
+    }
 }

@@ -175,16 +175,29 @@ fun HomeScreen(
 @Composable
 private fun GreetingHeader(name: String?) {
     Column(Modifier.fillMaxWidth()) {
-        Text(
-            text = if (name.isNullOrBlank()) "¡Hola!" else "¡Hola, $name!",
-            style = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 34.sp,
-                lineHeight = 40.sp
-            ),
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+        if (name.isNullOrBlank()) {
+            Text(
+                text = "¡HOLA!",
+                style = CaprichoTheme.pixelText.title.copy(fontSize = 26.sp, lineHeight = 32.sp),
+                color = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            // "¡HOLA!" chico y el nombre abajo: un nombre largo pasa a la línea siguiente sin romper el saludo
+            Text(
+                text = "¡HOLA!",
+                style = CaprichoTheme.pixelText.tag,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = name.uppercase(),
+                style = CaprichoTheme.pixelText.title.copy(fontSize = 26.sp, lineHeight = 32.sp),
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(6.dp))
         Text(
             text = "Tu bolsillo y vos, del mismo lado.",
             style = MaterialTheme.typography.bodyLarge,

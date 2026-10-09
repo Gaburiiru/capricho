@@ -25,6 +25,8 @@ data class ProfileUiState(
     val isSaving: Boolean = false,
     val saveError: String? = null,
     val isInitialized: Boolean = false,
+    /** Si no es null, se muestra "¿seguro que tu sueldo es X?" con este monto. */
+    val lowSalaryToConfirm: Double? = null,
 )
 
 class ProfileViewModel(
@@ -72,6 +74,7 @@ class ProfileViewModel(
                 nicknameError = null,
                 salaryError = null,
                 saveError = null,
+                lowSalaryToConfirm = null,
             )
         }
     }
@@ -92,7 +95,8 @@ class ProfileViewModel(
         )
     }
 
-    fun onSave(onProfileUpdated: (Profile) -> Unit) {
+    /** Si el sueldo es sospechosamente bajo, pide confirmación antes de guardar. */
+    fun onSave(onProfileUpdated: (Profile) -> Unit, skipLowSalaryCheck: Boolean = false) {
         val current = _uiState.value
         if (current.isSaving) return
 
@@ -109,6 +113,13 @@ class ProfileViewModel(
                 )
             }
             return
+        }
+
+        if (!skipLowSalaryCheck) {
+            ProfileValidator.lowSalaryToConfirm(current.salary)?.let { low ->
+                _uiState.update { it.copy(lowSalaryToConfirm = low) }
+                return
+            }
         }
 
         val draft = ProfileDraft(
@@ -143,6 +154,17 @@ class ProfileViewModel(
                 },
             )
         }
+    }
+
+    /** El usuario confirmó que el sueldo bajo es correcto: se guarda. */
+    fun onConfirmLowSalary(onProfileUpdated: (Profile) -> Unit) {
+        _uiState.update { it.copy(lowSalaryToConfirm = null) }
+        onSave(onProfileUpdated, skipLowSalaryCheck = true)
+    }
+
+    /** El usuario canceló: vuelve al formulario para corregir el sueldo. */
+    fun onDismissLowSalary() {
+        _uiState.update { it.copy(lowSalaryToConfirm = null) }
     }
 
     private companion object {

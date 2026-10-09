@@ -142,7 +142,14 @@ private fun <T> PixelPill(
                 .height(itemHeight)
                 .clip(shape)
                 .background(bgColor, shape)
-                .then(if (isSelected) Modifier.border(2.dp, colors.onPrimary, shape) else Modifier)
+                .then(
+                    when {
+                        isSelected -> Modifier.border(2.dp, colors.onPrimary, shape)
+                        // En claro el borde de tinta define la ficha; en oscuro alcanza con el contraste del fondo
+                        !isDarkTheme() -> Modifier.border(2.dp, colors.outlineVariant, shape)
+                        else -> Modifier
+                    },
+                )
                 .selectable(
                     selected = isSelected,
                     interactionSource = interaction,

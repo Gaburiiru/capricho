@@ -188,6 +188,15 @@ object MascotSprites {
         "..BBBBBBBB..",
     )
 
+    // Buscando (sin conexión): mira a los costados y hacia arriba, como rastreando la señal
+    private fun lookUp(eyes: String) =
+        listOf(EARS_1, EARS_2, eyes, eyes, FOREHEAD, CHEEKS, NOSE, MOUTH_CLOSED, CHIN_1, CHIN_2)
+
+    private val searchLeft = face(EYES_LEFT, EYES_LEFT, MOUTH_CLOSED)
+    private val searchUpLeft = lookUp(EYES_LEFT)
+    private val searchUpRight = lookUp(EYES_RIGHT)
+    private val searchRight = face(EYES_RIGHT, EYES_RIGHT, MOUTH_CLOSED)
+
     fun framesFor(mood: MascotMood): List<SpriteFrame> = when (mood) {
         MascotMood.Idle -> listOf(
             SpriteFrame(idleOpen, 2_000),
@@ -231,6 +240,14 @@ object MascotSprites {
         MascotMood.Celebrating -> listOf(
             SpriteFrame(celebrate1, 220),
             SpriteFrame(celebrate2, 220),
+        )
+        MascotMood.Searching -> listOf(
+            SpriteFrame(searchLeft, 600),
+            SpriteFrame(searchUpLeft, 500),
+            SpriteFrame(searchUpRight, 500),
+            SpriteFrame(searchRight, 600),
+            SpriteFrame(idleBlink, 140),
+            SpriteFrame(searchRight, 300),
         )
         MascotMood.Sleeping -> listOf(
             SpriteFrame(sleeping1, 900),

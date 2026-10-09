@@ -9,11 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,14 +20,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
+import com.example.caprichoapp.core.designsystem.pixel.PixelButton
+import com.example.caprichoapp.core.designsystem.pixel.PixelButtonVariant
+import com.example.caprichoapp.core.designsystem.pixel.PixelWordmark
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
+fun LoginScreen(
+    onOpenAccount: () -> Unit,
+    viewModel: LoginViewModel = koinViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LoginContent(
         state = state,
-        onGoogleClick = { /* Parte 2 */ },
+        onSignInClick = onOpenAccount,
         onSkipClick = viewModel::onSkip,
     )
 }
@@ -38,7 +41,7 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
 @Composable
 fun LoginContent(
     state: LoginUiState,
-    onGoogleClick: () -> Unit,
+    onSignInClick: () -> Unit,
     onSkipClick: () -> Unit,
 ) {
     Column(
@@ -48,7 +51,7 @@ fun LoginContent(
     ) {
         Mascot(MascotMood.Idle, Modifier.size(140.dp))
         Spacer(Modifier.height(16.dp))
-        Text("Capricho", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.primary)
+        PixelWordmark()
         Spacer(Modifier.height(8.dp))
         Text(
             "Iniciá sesión para guardar tus gastos y metas",
@@ -58,18 +61,22 @@ fun LoginContent(
         )
         Spacer(Modifier.height(32.dp))
 
-        Button(
-            onClick = onGoogleClick,
+        PixelButton(
+            text = if (state.isLoading) "Conectando..." else "Iniciar sesión",
+            onClick = onSignInClick,
             enabled = !state.isLoading,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-        ) {
-            if (state.isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            else Text("Continuar con Google")
-        }
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = onSkipClick, enabled = !state.isLoading) {
-            Text("Saltar por ahora")
-        }
+            showArrow = false,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(12.dp))
+        PixelButton(
+            text = "Saltar sesión (temporal)",
+            onClick = onSkipClick,
+            enabled = !state.isLoading,
+            variant = PixelButtonVariant.Secondary,
+            showArrow = false,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         state.errorMessage?.let {
             Spacer(Modifier.height(12.dp))

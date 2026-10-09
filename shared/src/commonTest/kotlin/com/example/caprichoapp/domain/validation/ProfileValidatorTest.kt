@@ -72,4 +72,24 @@ class ProfileValidatorTest {
         assertNull(ProfileValidator.validateSalary("1000000000"))
         assertEquals(SalaryError.TOO_LARGE, ProfileValidator.validateSalary("1000000001"))
     }
+
+    @Test
+    fun `sueldo bajo pide confirmacion y devuelve el monto ingresado`() {
+        assertEquals(9_000.0, ProfileValidator.lowSalaryToConfirm("9000"))
+        assertEquals(10.0, ProfileValidator.lowSalaryToConfirm("10"))
+        assertEquals(9_999.0, ProfileValidator.lowSalaryToConfirm("9999"))
+    }
+
+    @Test
+    fun `desde 10 mil no pide confirmacion`() {
+        assertNull(ProfileValidator.lowSalaryToConfirm("10000"))
+        assertNull(ProfileValidator.lowSalaryToConfirm("1700000"))
+    }
+
+    @Test
+    fun `un sueldo invalido no pide confirmacion porque ya tiene su error`() {
+        assertNull(ProfileValidator.lowSalaryToConfirm("0"))
+        assertNull(ProfileValidator.lowSalaryToConfirm(""))
+        assertNull(ProfileValidator.lowSalaryToConfirm("abc"))
+    }
 }

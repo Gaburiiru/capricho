@@ -138,10 +138,11 @@ fun TamagotchiCard(
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        PixelIconImage(
-                            icon = PixelIcon.ArrowLeft,
-                            tint = if (prevEnabled) Color.White else Color.Gray,
-                            modifier = Modifier.size(10.dp),
+                        val arrowTint = if (prevEnabled) Color.White else Color.Gray
+                        PixelSprite(
+                            rows = TV_ARROW_LEFT,
+                            palette = remember(arrowTint) { mapOf('X' to arrowTint) },
+                            modifier = Modifier.width(8.dp), // 4 columnas x 2dp, misma escala que antes
                         )
                     }
 
@@ -197,10 +198,11 @@ fun TamagotchiCard(
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        PixelIconImage(
-                            icon = PixelIcon.ArrowRight,
-                            tint = if (nextEnabled) Color.White else Color.Gray,
-                            modifier = Modifier.size(10.dp),
+                        val arrowTint = if (nextEnabled) Color.White else Color.Gray
+                        PixelSprite(
+                            rows = TV_ARROW_RIGHT,
+                            palette = remember(arrowTint) { mapOf('X' to arrowTint) },
+                            modifier = Modifier.width(8.dp), // 4 columnas x 2dp, misma escala que antes
                         )
                     }
                 }
@@ -208,3 +210,8 @@ fun TamagotchiCard(
         }
     }
 }
+
+// Las flechas del set de íconos tienen una columna vacía (grilla de 5 con forma de 4), lo que las
+// corre hacia adentro del botón. Acá se recorta esa columna para que el triángulo quede centrado.
+private val TV_ARROW_LEFT = PixelIcon.ArrowLeft.rows.map { it.drop(1) }
+private val TV_ARROW_RIGHT = PixelIcon.ArrowRight.rows.map { it.dropLast(1) }

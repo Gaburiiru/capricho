@@ -110,4 +110,51 @@ class OnboardingViewModelTest {
         assertNull(vm.uiState.value.saveError)
         assertNotNull(vm.uiState.value.savedProfile)
     }
+
+    @Test
+    fun `sueldo bajo pide confirmacion y no guarda hasta confirmar`() = runTest {
+        val repo = FakeProfileRepository()
+        val vm = OnboardingViewModel(repo)
+        vm.onNameChange("Lucía")
+        vm.onSalaryChange("9000")
+
+        vm.onSave()
+
+        assertEquals(9_000.0, vm.uiState.value.lowSalaryToConfirm)
+        assertEquals(0, repo.saveCalls)
+
+        vm.onConfirmLowSalary()
+
+        assertEquals(null, vm.uiState.value.lowSalaryToConfirm)
+        assertEquals(1, repo.saveCalls)
+        assertEquals(9_000.0, repo.lastDraft?.monthlySalary)
+    }
+
+    @Test
+    fun `cancelar la confirmacion no guarda y conserva lo escrito`() = runTest {
+        val repo = FakeProfileRepository()
+        val vm = OnboardingViewModel(repo)
+        vm.onNameChange("Lucía")
+        vm.onSalaryChange("9000")
+        vm.onSave()
+
+        vm.onDismissLowSalary()
+
+        assertEquals(null, vm.uiState.value.lowSalaryToConfirm)
+        assertEquals("9000", vm.uiState.value.salary)
+        assertEquals(0, repo.saveCalls)
+    }
+
+    @Test
+    fun `sueldo normal guarda directo sin pedir confirmacion`() = runTest {
+        val repo = FakeProfileRepository()
+        val vm = OnboardingViewModel(repo)
+        vm.onNameChange("Lucía")
+        vm.onSalaryChange("10000")
+
+        vm.onSave()
+
+        assertEquals(null, vm.uiState.value.lowSalaryToConfirm)
+        assertEquals(1, repo.saveCalls)
+    }
 }

@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.caprichoapp.core.designsystem.components.LowSalaryConfirmDialog
 import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
@@ -58,6 +58,14 @@ fun ProfileScreen(
         viewModel.initFromProfile(profile)
     }
 
+    state.lowSalaryToConfirm?.let { low ->
+        LowSalaryConfirmDialog(
+            salary = low,
+            onConfirm = { viewModel.onConfirmLowSalary(onProfileSaved) },
+            onDismiss = viewModel::onDismissLowSalary,
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,8 +80,8 @@ fun ProfileScreen(
         if (!state.isEditing) {
             if (profile != null) {
                 Text(
-                    text = profile.shownName,
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = profile.shownName.uppercase(),
+                    style = CaprichoTheme.pixelText.title.copy(fontSize = 24.sp, lineHeight = 30.sp),
                     color = colors.primary,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
@@ -105,7 +113,7 @@ fun ProfileScreen(
                 Spacer(Modifier.height(8.dp))
 
                 PixelButton(
-                    text = "Editar perfil",
+                    text = "Editar mi perfil",
                     onClick = { viewModel.startEditing(profile) },
                     icon = PixelIcon.Edit,
                     modifier = Modifier.fillMaxWidth(),
@@ -113,11 +121,11 @@ fun ProfileScreen(
             }
 
             Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onSignOut) { Text("Cerrar sesión") }
+            PixelTextButton(text = "Cerrar sesión", onClick = onSignOut)
         } else {
             // Modo edición
             Text(
-                text = "EDITAR PERFIL",
+                text = "EDITAR MI PERFIL",
                 style = CaprichoTheme.pixelText.title.copy(fontSize = 20.sp),
                 color = colors.primary,
             )

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.caprichoapp.core.network.ReconnectEffect
 import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
@@ -88,6 +89,9 @@ fun GoalsScreen(
     LaunchedEffect(Unit) {
         viewModel.loadGoals()
     }
+
+    // Si falló por falta de internet, al volver se recargan las metas
+    ReconnectEffect(onReconnected = viewModel::loadGoals)
 
     Column(
         modifier = Modifier
@@ -215,7 +219,12 @@ fun GoalsScreen(
             onDismiss = viewModel::onCloseDetailDialog,
             onAddSavings = { amount -> viewModel.addSavings(goal, amount) },
             onDelete = { viewModel.onRequestDeleteGoal(goal) },
-            onOpenStrategy = onOpenStrategy,
+            // El diálogo de detalle es una ventana aparte y su estado vive en el ViewModel:
+            // hay que cerrarlo antes de navegar, o al volver de Estrategia reaparece abierto.
+            onOpenStrategy = { goalId ->
+                viewModel.onCloseDetailDialog()
+                onOpenStrategy(goalId)
+            },
             canGenerateStrategy = canGenerateStrategy,
         )
     }

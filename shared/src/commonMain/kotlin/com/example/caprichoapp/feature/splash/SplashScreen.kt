@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
+import com.example.caprichoapp.core.designsystem.pixel.PixelButton
+import com.example.caprichoapp.core.designsystem.pixel.PixelButtonSize
+import com.example.caprichoapp.core.designsystem.pixel.PixelWordmark
 import com.example.caprichoapp.feature.auth.SessionState
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -52,11 +54,7 @@ fun SplashScreen(
     ) {
         Mascot(mood = MascotMood.Idle, modifier = Modifier.size(160.dp))
         Spacer(Modifier.height(24.dp))
-        Text(
-            text = "Capricho",
-            style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        PixelWordmark()
 
         if (sessionState is SessionState.ProfileError) {
             Spacer(Modifier.height(24.dp))
@@ -67,7 +65,7 @@ fun SplashScreen(
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(12.dp))
-            Button(onClick = onRetry) { Text("Reintentar") }
+            PixelButton(text = "Reintentar", onClick = onRetry, size = PixelButtonSize.Compact)
         }
     }
 }

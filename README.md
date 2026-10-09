@@ -86,6 +86,7 @@ Principios de producto:
 - [x] Onboarding (nombre, **apodo opcional** y sueldo mensual) persistido en Supabase; la interfaz usa el apodo si existe
 - [x] Home "Capricho": bicho virtual estilo años 90 (pantalla LCD, mascota animada que habla y reacciona al toque) que invita a predecir el capricho
 - [x] Barra de navegación inferior con íconos pixel art: Historial, Metas, Inicio y Perfil
+- [x] **Pantalla de sin conexión:** si ya hay sesión y se pierde internet, la mascota "busca" la señal y la app no muestra errores de Supabase; al volver la conexión retoma la pantalla donde estaba y recarga los datos
 - [x] Ingreso de monto con teclado numérico propio
 - [x] Selección inmediato / cuotas con pills (1, 3, 6, 9, 12, 18, 24, otra)
 - [x] Selección de durabilidad (fugaz / medio / alto)
@@ -203,12 +204,31 @@ flowchart TD
 - **Persistencia:** `supabase-kt` guarda y restaura la sesión entre ejecuciones de la app.
 - **Onboarding (solo la primera vez):** tras iniciar sesión, la app consulta la tabla `profiles`. **Sin fila → Onboarding; con fila → Home.** La fuente de verdad queda en Supabase y no en una bandera local. Si no se puede consultar el perfil (por ejemplo, sin internet), la app **no** manda al usuario al onboarding —para no pisar sus datos—: muestra un error con botón *Reintentar* en la Splash.
 
+### Pérdida de conexión con sesión iniciada
+
+```mermaid
+flowchart TD
+    A["Cada 4 s con la app visible · al entrar a una pantalla · al volver del fondo<br/>o falla un pedido a Supabase"] --> B[ConnectivityMonitor]
+    B --> C{"Prueba liviana a /auth/v1/health<br/>¿responde el servidor?"}
+    C -- Sí --> D[Falsa alarma: sigue en línea<br/>la pantalla muestra su propio error]
+    C -- No --> E[isOnline = false<br/>OfflineScreen encima de la pantalla actual]
+    E --> F["Reintenta cada 3 s"]
+    F -- Vuelve internet --> G[isOnline = true + evento reconnected]
+    G --> H[La pantalla visible recarga sus datos<br/>ReconnectEffect]
+```
+
+- **Proactiva:** la app no espera a que falle una llamada. `periodicChecks()` verifica cada 4 s mientras está visible (se pausa en segundo plano y verifica al instante al volver) y `checkNow()` se dispara al entrar a cada pantalla; los fallos de los repositorios también disparan una verificación.
+- **Detección en `commonMain`, sin APIs de cada plataforma:** `runCatchingCancellable` avisa al `ConnectivityMonitor` (vía `NetworkFailureReporter`) cuando falla una llamada de un repositorio; el monitor no adivina por el tipo de excepción, **verifica** con un pedido liviano (cualquier respuesta HTTP cuenta como "hay internet").
+- **La pantalla se superpone, no navega:** `OfflineScreen` se dibuja encima del `NavHost` (solo si hay sesión), así el back stack, lo que escribió el usuario y la pestaña actual quedan intactos. Tapa también la barra inferior y no tiene botones: se va sola.
+- **Recuperación:** al volver internet, `ReconnectEffect` recarga Metas, Historial y Estrategia (si estaba en error); si el perfil no había podido cargarse al arrancar, la sesión reintenta sola.
+
 ### Limitaciones conocidas
 
 | Limitación | Detalle | Mitigación / futuro |
 |---|---|---|
 | **Google solo en Android** | El login con Google usa el flujo nativo de Android (Credential Manager, vía `compose-auth`). En iOS, `compose-auth` solo ofrece login nativo con **Apple**; Google en iOS requeriría un flujo por navegador con deep links o el SDK de Google. **No está implementado ni verificado en iOS** (no hubo acceso a macOS). | En iOS el botón de Google muestra un mensaje y el usuario puede usar **"Saltar"**. |
 | **Usuario anónimo pierde sus datos** | Quien entra con **"Saltar"** tiene una sesión sin credenciales: si **desinstala la app o cierra sesión**, no puede recuperar su cuenta y **pierde sus datos** (gastos, metas y perfil). | Iniciar sesión con Google evita el problema. Futuro: **vincular la cuenta anónima a una identidad de Google** para conservar los datos. |
+| **Sin conexión durante el uso** | Con sesión iniciada y sin internet, una pantalla propia (mascota buscando + señal animada) tapa la app hasta que vuelve la conexión. No hay modo offline: no se muestran datos viejos ni se guardan cambios sin red. | Futuro: cache local + cola de escritura (ver [Funcionalidades futuras](#-funcionalidades-futuras)). |
 | **Login anónimo habilitado** | Es necesario para el botón "Saltar" y permite crear usuarios sin registro. | RLS garantiza que cada usuario accede solo a sus filas. Futuro: límites de tasa o CAPTCHA si se publicara. |
 
 ---
@@ -577,7 +597,8 @@ Fecha límite de entrega: **8 de octubre de 2026, 23:59**. El plan va **de menor
 
 ### Fase 5 · Pulido y entrega
 - [ ] `fix/refactor: auditoría de crashes, estados vacíos y errores de red`
-- [ ] `feat(ui): transiciones entre pasos y animaciones de la mascota`
+- [x] `feat(offline): pantalla de sin conexión con mascota buscando y recuperación automática`
+- [x] `feat(ui): transiciones entre pasos y animaciones de la mascota`
 - [ ] `docs: capturas, diagramas y log de uso de IA`
 - [ ] `chore: APK release firmado + tag v1.0.0`
 - [ ] 📧 Mail a `info@aranguriapps.com` — Asunto: **[NOMBRE APELLIDO - Challenge tecnico AranguriApps]**, con link al repo y APK.
@@ -595,7 +616,7 @@ Fuera del alcance del challenge, pero **contempladas en el diseño de datos**:
 - **Gastos recurrentes automáticos** y alertas de suscripciones olvidadas.
 - **Cuotas con interés** y comparación contado vs. cuotas.
 - **Notificaciones** semanales con resumen amable.
-- **Modo offline** con sincronización (cache local + cola de escritura).
+- **Modo offline** con sincronización (cache local + cola de escritura). Hoy, sin internet, solo se muestra la pantalla de sin conexión.
 - **Multi-moneda** y ajuste por inflación.
 
 ---
@@ -616,6 +637,7 @@ Fuera del alcance del challenge, pero **contempladas en el diseño de datos**:
 | Tabs de Historial, Metas y Perfil como pantallas provisorias | Dejar los íconos sin destino | La navegación ya funciona de punta a punta y cada pantalla se reemplaza cuando llega su feature |
 | "Saltar" con sesión anónima de Supabase | Modo invitado sin sesión | Mantiene RLS y el mismo flujo de datos, y evita bloquear a quien no pueda usar Google (por ejemplo, quien evalúa la app). Costo: los datos se pierden al desinstalar o cerrar sesión |
 | Google nativo solo en Android | Flujo por navegador con deep links en ambas plataformas | Menos configuración y mejor experiencia; iOS no se puede verificar sin macOS, así que se documenta en vez de dejarlo a medias |
+| Pantalla de sin conexión superpuesta, detectada por fallo + verificación | Navegar a una ruta "offline", o usar la API de conectividad de cada plataforma (`expect/actual`) | Superponer conserva el estado y el back stack; verificar con un pedido evita depender de `androidMain`/`iosMain` y da falsos positivos nulos (wifi sin salida a internet incluido) |
 | El estado de sesión decide la navegación | Que cada pantalla decida a dónde ir | Evita rutas inconsistentes al vencer o cerrar la sesión |
 
 ---

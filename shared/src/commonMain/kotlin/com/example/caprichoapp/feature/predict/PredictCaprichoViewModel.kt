@@ -3,11 +3,17 @@ package com.example.caprichoapp.feature.predict
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.caprichoapp.core.util.appendAmountDigit
+import com.example.caprichoapp.core.util.today
 import com.example.caprichoapp.domain.calculator.ImpactCalculator
+import com.example.caprichoapp.domain.model.Category
 import com.example.caprichoapp.domain.model.Durability
+import com.example.caprichoapp.domain.model.Expense
+import com.example.caprichoapp.domain.model.ExpenseKind
 import com.example.caprichoapp.domain.model.Goal
 import com.example.caprichoapp.domain.model.GoalStatus
 import com.example.caprichoapp.domain.model.Profile
+import com.example.caprichoapp.domain.repository.CategoryRepository
+import com.example.caprichoapp.domain.repository.ExpenseRepository
 import com.example.caprichoapp.domain.repository.GoalRepository
 import com.example.caprichoapp.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +31,8 @@ private fun Double.toPercentOneDecimal(): Double = (this * 1000).toInt() / 10.0
 class PredictCaprichoViewModel(
     private val profileRepository: ProfileRepository,
     private val goalRepository: GoalRepository,
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PredictCaprichoState())
@@ -35,6 +43,10 @@ class PredictCaprichoViewModel(
     init {
         viewModelScope.launch {
             userProfile = profileRepository.fetchProfile().getOrNull()
+        }
+        viewModelScope.launch {
+            val categories = categoryRepository.getCategories().getOrElse { emptyList() }
+            _state.update { it.copy(categories = categories) }
         }
     }
 
@@ -93,9 +105,58 @@ class PredictCaprichoViewModel(
         _state.update { it.copy(showSaveGoalDialog = show, goalSaveError = null) }
     }
 
+    fun showSaveExpenseDialog(show: Boolean) {
+        // Sin contado no hay gasto (ver PredictCaprichoState.canSaveAsExpense)
+        if (show && !_state.value.canSaveAsExpense) return
+        _state.update { it.copy(showSaveExpenseDialog = show, expenseSaveError = null) }
+    }
+
+    /**
+     * Guarda el capricho como gasto (solo contado). Meta y gasto son excluyentes: una vez
+     * guardado como uno, no se puede guardar también como el otro.
+     */
+    fun saveAsExpense(title: String, category: Category) {
+        val current = _state.value
+        if (title.isBlank() || !current.canSaveAsExpense) return
+        if (current.isSavingExpense || current.isExpenseSaved || current.isGoalSaved) return
+
+        val expense = Expense(
+            categoryId = category.id.ifBlank { null },
+            categoryName = category.name,
+            title = title.trim(),
+            amount = current.amount,
+            installments = 1,
+            durability = current.durability ?: Durability.FLEETING,
+            kind = ExpenseKind.ONE_OFF,
+            spentAt = today(),
+        )
+        viewModelScope.launch {
+            _state.update { it.copy(isSavingExpense = true, expenseSaveError = null) }
+            expenseRepository.addExpense(expense)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isSavingExpense = false,
+                            isExpenseSaved = true,
+                            showSaveExpenseDialog = false,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isSavingExpense = false,
+                            expenseSaveError = error.message ?: "Error al guardar el gasto",
+                        )
+                    }
+                }
+        }
+    }
+
     fun saveAsGoal(title: String) {
         if (title.isBlank()) return
         val current = _state.value
+        if (current.isExpenseSaved) return
         val goal = Goal(
             title = title.trim(),
             targetAmount = current.amount,

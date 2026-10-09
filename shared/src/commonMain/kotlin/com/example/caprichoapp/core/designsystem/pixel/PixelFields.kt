@@ -35,7 +35,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +67,10 @@ fun PixelTextField(
     placeholder: String = "",
     maxLength: Int = 40,
     keyboardType: KeyboardType = KeyboardType.Text,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    isError: Boolean = false,
+    /** Oculta lo que se escribe y usa el teclado de contraseñas. */
+    isPassword: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = remember { PixelCutShape(3.dp) }
@@ -75,14 +82,19 @@ fun PixelTextField(
             value = value,
             onValueChange = { if (it.length <= maxLength) onValueChange(it) },
             singleLine = true,
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
             cursorBrush = SolidColor(colors.primary),
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(
+                capitalization = capitalization,
+                keyboardType = if (isPassword) KeyboardType.Password else keyboardType,
+                imeAction = ImeAction.Done,
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focused = it.isFocused }
                 .background(colors.surfaceContainerHighest, shape)
-                .border(2.dp, if (focused) colors.primary else colors.outline, shape)
+                .border(2.dp, if (isError) colors.error else if (focused) colors.primary else colors.outline, shape)
                 .heightIn(min = 52.dp)
                 .padding(horizontal = 14.dp, vertical = 14.dp),
             decorationBox = { inner ->

@@ -11,6 +11,10 @@ data object LoginRoute
 @Serializable
 data object OnboardingRoute
 
+/** Crear cuenta o ingresar con correo y contraseña (se abre desde el Login). */
+@Serializable
+data object AccountRoute
+
 // ---- Pestañas de la barra inferior ----
 @Serializable
 data object HistoryRoute

@@ -1,5 +1,6 @@
 package com.example.caprichoapp.feature.predict
 
+import com.example.caprichoapp.domain.model.Category
 import com.example.caprichoapp.domain.model.Durability
 
 enum class CaprichoTiming {
@@ -46,9 +47,21 @@ data class PredictCaprichoState(
     val isSavingGoal: Boolean = false,
     val isGoalSaved: Boolean = false,
     val goalSaveError: String? = null,
+    val categories: List<Category> = emptyList(),
+    val showSaveExpenseDialog: Boolean = false,
+    val isSavingExpense: Boolean = false,
+    val isExpenseSaved: Boolean = false,
+    val expenseSaveError: String? = null,
 ) {
     val amount: Double
         get() = rawAmount.toDoubleOrNull() ?: 0.0
+
+    /**
+     * Regla de diseño de esta entrega: como gasto solo se guarda lo que se paga al contado,
+     * porque todo el cálculo se hace sobre la mensualidad y no sobre pagos posteriores.
+     */
+    val canSaveAsExpense: Boolean
+        get() = installments == 1 && amount > 0.0
 
     val isStepValid: Boolean
         get() = when (step) {

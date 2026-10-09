@@ -48,6 +48,8 @@ import com.example.caprichoapp.core.designsystem.CaprichoTheme
 import com.example.caprichoapp.core.designsystem.mascot.Mascot
 import com.example.caprichoapp.core.designsystem.mascot.MascotMood
 import com.example.caprichoapp.core.designsystem.pixel.PixelButton
+import com.example.caprichoapp.core.designsystem.pixel.PixelButtonVariant
+import com.example.caprichoapp.core.designsystem.pixel.PixelChipGroup
 import com.example.caprichoapp.core.designsystem.pixel.PixelCutShape
 import com.example.caprichoapp.core.designsystem.pixel.PixelDialog
 import com.example.caprichoapp.core.designsystem.pixel.PixelIcon
@@ -62,8 +64,9 @@ import com.example.caprichoapp.core.designsystem.pixel.PixelTypewriterText
 import com.example.caprichoapp.core.designsystem.pixel.TamagotchiCard
 import com.example.caprichoapp.core.util.amountFontSizeSp
 import com.example.caprichoapp.core.util.formatAmount
-import com.example.caprichoapp.core.util.formatPercent
+import com.example.caprichoapp.core.util.formatPercentCapped
 import com.example.caprichoapp.core.util.formatThousands
+import com.example.caprichoapp.domain.model.Category
 import com.example.caprichoapp.domain.model.Durability
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -133,7 +136,10 @@ fun PredictCaprichoScreen(
                     diagnosis = state.diagnosis,
                     rawAmount = state.rawAmount,
                     isGoalSaved = state.isGoalSaved,
+                    isExpenseSaved = state.isExpenseSaved,
+                    canSaveAsExpense = state.canSaveAsExpense,
                     onSaveGoalClick = { viewModel.showSaveGoalDialog(true) },
+                    onSaveExpenseClick = { viewModel.showSaveExpenseDialog(true) },
                     onFinish = onNavigateBack,
                 )
             }
@@ -148,6 +154,17 @@ fun PredictCaprichoScreen(
             errorMessage = state.goalSaveError,
             onDismiss = { viewModel.showSaveGoalDialog(false) },
             onConfirm = { title -> viewModel.saveAsGoal(title) },
+        )
+    }
+
+    if (state.showSaveExpenseDialog) {
+        SaveExpenseDialog(
+            summary = "$ ${state.rawAmount.formatAmount()} · Contado",
+            categories = state.categories,
+            isSaving = state.isSavingExpense,
+            errorMessage = state.expenseSaveError,
+            onDismiss = { viewModel.showSaveExpenseDialog(false) },
+            onConfirm = { title, category -> viewModel.saveAsExpense(title, category) },
         )
     }
 }
@@ -452,7 +469,7 @@ private fun StepDurability(
         hint = "Pensá cuánto lo vas a disfrutar.",
         button = {
             PixelButton(
-                text = "Predecir capricho",
+                text = "Predecir mi capricho",
                 onClick = onNext,
                 enabled = isValid,
                 modifier = Modifier.fillMaxWidth(),
@@ -474,7 +491,10 @@ private fun StepResult(
     diagnosis: CaprichoDiagnosis?,
     rawAmount: String,
     isGoalSaved: Boolean,
+    isExpenseSaved: Boolean,
+    canSaveAsExpense: Boolean,
     onSaveGoalClick: () -> Unit,
+    onSaveExpenseClick: () -> Unit,
     onFinish: () -> Unit,
 ) {
     if (diagnosis == null) return
@@ -511,14 +531,35 @@ private fun StepResult(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // Meta y gasto son excluyentes: guardado uno, el otro queda deshabilitado
+                val alreadySaved = isGoalSaved || isExpenseSaved
                 PixelButton(
                     text = if (isGoalSaved) "Meta guardada" else "Guardar como meta",
                     onClick = onSaveGoalClick,
-                    enabled = !isGoalSaved,
+                    enabled = !alreadySaved,
                     icon = if (isGoalSaved) PixelIcon.Check else null,
                     showArrow = !isGoalSaved,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Spacer(Modifier.height(8.dp))
+                PixelButton(
+                    text = if (isExpenseSaved) "Gasto guardado" else "Guardar como gasto",
+                    onClick = onSaveExpenseClick,
+                    enabled = canSaveAsExpense && !alreadySaved,
+                    variant = PixelButtonVariant.Secondary,
+                    icon = if (isExpenseSaved) PixelIcon.Check else null,
+                    showArrow = false,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (!canSaveAsExpense) {
+                    Text(
+                        text = "Como gasto solo se guarda si es al contado",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                }
                 PixelTextButton(text = "Volver al inicio", onClick = onFinish)
             }
         },
@@ -548,7 +589,7 @@ private fun StepResult(
 
             // El dato principal, bien grande y con su semáforo
             ResultHero(
-                percentText = "${diagnosis.salaryImpactPercent.formatPercent()}%",
+                percentText = "${diagnosis.salaryImpactPercent.formatPercentCapped()}%",
                 caption = impactCaption,
                 progress = (diagnosis.salaryImpactPercent / 100.0).toFloat(),
                 color = impactColor,
@@ -660,12 +701,12 @@ private fun GoalImpactRow(impact: GoalImpactInfo) {
             Spacer(Modifier.height(4.dp))
             GapLine(
                 label = "Hoy te falta",
-                value = "${impact.gapNowPercent.formatPercent()}%",
+                value = "${impact.gapNowPercent.formatPercentCapped()}%",
                 valueColor = colors.onSurface,
             )
             GapLine(
                 label = "Con este capricho",
-                value = "${impact.gapAfterPercent.formatPercent()}%",
+                value = "${impact.gapAfterPercent.formatPercentCapped()}%",
                 valueColor = if (heavy) CaprichoTheme.impact.warning else colors.onSurface,
             )
         }
@@ -689,6 +730,81 @@ private fun GapLine(label: String, value: String, valueColor: Color) {
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = valueColor,
         )
+    }
+}
+
+/** Guardar el capricho (al contado) como gasto: nombre y categoría; el monto ya lo tenemos. */
+@Composable
+private fun SaveExpenseDialog(
+    summary: String,
+    categories: List<Category>,
+    isSaving: Boolean,
+    errorMessage: String?,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Category) -> Unit,
+) {
+    val expenseCategories = categories.ifEmpty {
+        listOf(
+            Category(name = "Vivienda"),
+            Category(name = "Comida"),
+            Category(name = "Transporte"),
+            Category(name = "Salud"),
+            Category(name = "Ropa"),
+            Category(name = "Juegos"),
+            Category(name = "Otros"),
+        )
+    }
+    var title by remember { mutableStateOf("") }
+    var selectedCategory by remember(expenseCategories) {
+        mutableStateOf(
+            expenseCategories.firstOrNull { it.name == "Otros" }
+                ?: expenseCategories.first(),
+        )
+    }
+    val colors = MaterialTheme.colorScheme
+    val canSave = title.isNotBlank() && !isSaving
+
+    PixelDialog(
+        onDismiss = onDismiss,
+        title = "Guardar como gasto",
+        actions = {
+            PixelButton(
+                text = if (isSaving) "Guardando..." else "Guardar gasto",
+                onClick = { if (canSave) onConfirm(title, selectedCategory) },
+                enabled = canSave,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(4.dp))
+            PixelTextButton(text = "Cancelar", onClick = onDismiss)
+        },
+    ) {
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = colors.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        PixelTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = "¿En qué lo gastaste?",
+            placeholder = "Ej: Zapatillas, Cena...",
+            maxLength = 40,
+        )
+        PixelChipGroup(
+            label = "Categoría",
+            options = expenseCategories.map { it to it.name },
+            selected = selectedCategory,
+            onSelected = { selectedCategory = it },
+        )
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = colors.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 

@@ -34,11 +34,4 @@ class LoginViewModel(
             // Si sale bien, authState cambia y el NavHost navega solo
         }
     }
-
-    // Se usan en la Parte 2 (Google)
-    fun onGoogleStarted() = _uiState.update { LoginUiState(isLoading = true) }
-    fun onGoogleCancelled() = _uiState.update { LoginUiState() }
-    fun onGoogleFailed() = _uiState.update {
-        LoginUiState(errorMessage = "No pudimos iniciar con Google. Probá de nuevo o tocá \"Saltar\".")
-    }
 }
